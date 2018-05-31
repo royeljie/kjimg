@@ -9,7 +9,7 @@ class ListField(models.TextField):
     现在主要是from_db_value 方法 把数据库数据转化成python数据
     to_python 主要是接受form表单
     """
-    __metacalss__ = models.SubfieldBase
+    # __metacalss__ = models.SubfieldBase
     description = 'Stores a python list'
 
     def __init__(self, *args, **kwargs):
