@@ -44,7 +44,7 @@ class SearchCertificateForm(forms.Form):
 
 class ParamForm(forms.ModelForm):
     class Meta:
-        models = models.Param
+        model = models.Param
         fields = ['id', 'name', 'code', 'val']
 
 
