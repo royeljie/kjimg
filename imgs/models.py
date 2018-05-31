@@ -3,6 +3,7 @@ from django.contrib.auth.models import User, AbstractUser
 # from .custom_field import ListField
 
 
+
 # Create your models here.
 class Menu(models.Model):
     text = models.CharField('菜单名称', max_length=20)
