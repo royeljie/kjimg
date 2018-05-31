@@ -1,0 +1,225 @@
+{% extends "base.html" %} {% block title %}用户管理{% endblock %} {% block content %}
+    <script type="text/javascript">
+        var url;
+
+        $(document).ready(function () {
+            $('#dg').datagrid({
+                url: "{% url 'imgs:pageUser' %}",
+                method: 'get',
+                fit: true,
+                fitColumns: true,
+                striped: true,
+                singleSelect: true,
+                pagination: true,
+                pageList: [20, 30, 40, 50],
+                pageSize: 20,
+                toolbar: '#tb',
+                rownumbers: true,
+                idField: 'id',
+                columns: [[{
+                    field: 'ck',
+                    checkbox: true,
+                    width: 80,
+                    fixed: true
+                }, {
+                    field: 'fullname',
+                    title: '姓名',
+                    width: 100,
+                    halign: 'center',
+                    align: 'center'
+                }, {
+                    field: 'username',
+                    title: '用户名',
+                    width: 100,
+                    halign: 'center',
+                    align: 'center'
+                }, {
+                    field: 'orgName',
+                    title: '所属机构',
+                    width: 100,
+                    halign: 'center',
+                    align: 'center'
+                }, {
+                    field: 'active',
+                    title: '是否有效',
+                    width: 100,
+                    halign: 'center',
+                    align: 'center',
+                    fixed: true
+                }, {
+                    field: 'date_joined',
+                    title: '注册日期',
+                    width: 180,
+                    halign: 'center',
+                    align: 'center',
+                    fixed: true
+                }]]
+            });
+
+            $('#addBtn').linkbutton({
+                iconCls: 'user_add',
+                text: '添加',
+                plain: true,
+                onClick: function () {
+                    $('#fm').form('reset');
+                    $('#dlg').dialog('open');
+                    url = "{% url 'imgs:saveUser' %}";
+                }
+            });
+
+            $('#editBtn').linkbutton({
+                iconCls: 'user_edit',
+                text: '修改',
+                plain: true,
+                onClick: function () {
+                    var row = $('#dg').datagrid('getSelected');
+                    if (row) {
+                        $('#fm').form('reset');
+                        $('#fm').form('load', row);
+                        var is_active = 'False';
+                        if (row.is_active) {
+                            is_active = 'True';
+                        }
+                        $('#is_active').combobox('setValue', is_active);
+                        $('#org').combobox('setValue', row.orgId);
+                        $('#dlg').dialog('open');
+                        url = "{% url 'imgs:updateUser' %}";
+                    } else {
+                        $.messager.alert('操作结果', '请选择要修改的用户！', 'error');
+                    }
+                }
+            });
+
+            $('#delBtn').linkbutton({
+                iconCls: 'user_delete',
+                text: '删除',
+                plain: true,
+                onClick: function () {
+                    var row = $('#dg').datagrid('getSelected');
+                    if (row) {
+                        $.messager.confirm('确认', '确认删除?', function (ok) {
+                            if (ok) {
+                                $.ajax({
+                                    url: "{% url 'imgs:delUser' %}",
+                                    data: {
+                                        id: row.id
+                                    },
+                                    success: function (rst) {
+                                        $.messager.alert('操作结果', rst.msg, 'info');
+                                        $('#dg').datagrid('reload');
+                                    }
+                                });
+                            }
+                        });
+                    } else {
+                        $.messager.alert('操作结果', '请选择要删除的用户！', 'error');
+                    }
+                }
+            });
+
+            $('#resetBtn').linkbutton({
+                iconCls: 'user_key',
+                text: '重置密码',
+                plain: true,
+                onClick: function () {
+                    var row = $('#dg').datagrid('getSelected');
+                    if (row) {
+                        $.messager.confirm('确认', '确认重置密码?', function (ok) {
+                            if (ok) {
+                                $.ajax({
+                                    url: "{% url 'imgs:resetUser' %}",
+                                    data: {
+                                        id: row.id
+                                    },
+                                    success: function (rst) {
+                                        $.messager.alert('操作结果', rst.msg, 'info');
+                                    }
+                                });
+                            }
+                        });
+                    } else {
+                        $.messager.alert('操作结果', '请选择要重置密码的用户！', 'error');
+                    }
+                }
+            })
+        });
+    </script>
+
+    <script type="text/javascript">
+        function saveUser() {
+            $('#fm').form('submit', {
+                url: url,
+                ajax: true,
+                onSubmit: function () {
+                    return $(this).form('validate');
+                },
+                success: function (data) {
+                    var d = eval('(' + data + ')');
+                    $.messager.alert('操作结果', d.msg, 'info');
+                    if (d.rst) {
+                        $('#dlg').dialog('close');
+                        $('#fm').form('reset');
+                        $('#dg').datagrid('reload');
+                    }
+                }
+            });
+        }
+    </script>
+
+    <table id="dg"></table>
+    <div id="tb">
+        <a id="addBtn" href="#"></a>
+        <a id="editBtn" href="#"></a>
+        <a id="delBtn" href="#"></a>
+        <a id="resetBtn" href="#"></a>
+    </div>
+    <div id="dlg" class="easyui-dialog" style="width: 600px" title="添加/修改用户信息" closed="true"
+         modal="true" buttons="#dlg-buttons">
+        <form id="fm" method="post" style="margin: 0; padding: 20px 50px">
+            {% csrf_token %} <input type="hidden" id="id" name="id">
+            <div style="margin-bottom: 20px; font-size: 14px; border-bottom: 1px solid #ccc">用户信息</div>
+            <div style="margin-bottom: 10px;">
+                <input id="fullname" name="fullname" class="easyui-textbox"
+                       data-options="required:true,label:'姓名:'" style="width: 49%">
+                <input id="username"
+                       name="username"
+                       class="easyui-textbox"
+                       data-options="required:true,label:'用户名:',labelAlign:'right'"
+                       style="width: 49%">
+            </div>
+            <div style="margin-bottom: 10px">
+                <input id="org" name="org" class="easyui-combobox" style="width: 49%"
+                       data-options="
+                       label:'所属机构:',
+                       editable:false,
+                       required:true,
+                       valueField:'id',
+                       textField:'name',
+                       url:'{% url 'imgs:listSubAndSelfOrg' %}',
+                       method:'GET'
+                       "/>
+                <input id="is_active"
+                       name="is_active" class="easyui-combobox" style="width: 49%"
+                       data-options="
+				       label:'是否有效:',
+				       labelAlign:'right',
+				       editable:false,
+				       required:true,
+				       valueField:'v',
+				       textField:'n',
+				       data:[{
+				            v: 'True',
+					        n: '有效'
+				       },{
+					        v: 'False',
+					        n: '无效'
+				       }]"/>
+            </div>
+        </form>
+    </div>
+    <div id="dlg-buttons">
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="disk" onclick="saveUser()"
+           style="width: 90px">保存</a> <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="cancel"
+                                         onclick="javascript:$('#dlg').dialog('close')" style="width: 90px">取消</a>
+    </div>
+{% endblock %}

@@ -1,0 +1,155 @@
+{% load static %}
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>财务凭证电子化管理系统</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'jquery-easyui-1.5.3/themes/black/easyui.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'jquery-easyui-1.5.3/themes/icon.css' %}">
+    <script type="text/javascript" src="{% static 'jquery-1.12.4/jquery.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'jquery-easyui-1.5.3/jquery.easyui.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'jquery-easyui-1.5.3/locale/easyui-lang-zh_CN.js' %}"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('#mm').tree({
+                url: "{% url 'imgs:listMenus' %}",
+                method: 'get',
+                onClick: function (node) {
+                    if (!('children' in node)) {
+                        if (!$('#mt').tabs('exists', node.text)) {
+                            if ($('#mt').tabs('tabs').length < 10) {
+                                var content = "";
+                                if (node.url) {
+                                    content = '<iframe scrolling="no" frameborder="0"  src="';
+                                    content += '{% url 'imgs:main' %}' + node.url;
+                                    content += '" style="width:100%;height:100%;"></iframe>';
+                                } else {
+                                    content = '未实现';
+                                }
+                                $('#mt').tabs('add', {
+                                    id: node.id,
+                                    title: node.text,
+                                    iconCls: node.iconCls,
+                                    content: content,
+                                    closable: true
+                                });
+                            } else {
+                                $.messager.alert('操作结果',
+                                    '模块打开过多，请关闭一些模块后再试！', 'error');
+                            }
+                        } else {
+                            $('#mt').tabs('select', node.text);
+                            var str1 = '<iframe scrolling="no" frameborder="0"  src="';
+                            var str2 = '" style="width:100%;height:100%;"></iframe>';
+                            var currTab = $('#mt').tabs('getSelected'), iframe = $(currTab.panel('options').content),
+                                content = str1 + iframe.attr('src') + str2;
+                            $('#mt').tabs('update', {
+                                tab: currTab,
+                                options: {
+                                    content: content,
+                                    closable: true
+                                }
+                            });
+                        }
+                    }
+                }
+            });
+
+            $.ajax({
+                url: '{% url 'imgs:countRejectedCertificate' %}',
+                success: function (rst) {
+                    var d = eval('(' + rst + ')');
+                    if (d.count > 0) {
+                        var msg = '您有 <font color="red">' + d.count + '</font> 个待办事务，请在"本级待处理"菜单中处理！';
+                        $.messager.alert('待办事务', msg, 'info');
+                    }
+                }
+            })
+        });
+
+        function showChangePwdDlg() {
+            $('#changePwdDlg').dialog('open');
+            $('#changePwdFm').form('reset');
+        }
+
+        function changePwd() {
+            $('#changePwdFm').form('submit', {
+                url: '{% url 'imgs:changePwd' %}',
+                onSubmit: function () {
+                    return $(this).form('validate');
+                },
+                success: function (data) {
+                    var d = eval('(' + data + ')');
+                    $.messager.alert('操作结果', d.msg, 'info', function () {
+                        if (d.rst) {
+                            $('#changePwdDlg').dialog('close');
+                            $('#changePwdFm').form('reset');
+                        }
+                    });
+                }
+            });
+        }
+    </script>
+</head>
+<body class="easyui-layout">
+<div data-options="region:'north',border:true"
+     style="width:100%; height:80px; background:#60b9ce url({% static 'images/logo.png' %}) no-repeat;">
+    <div style="width:600px; height:20px; position:absolute; right:5px; bottom:7px; text-align:right;">
+        <a href="#" class="easyui-menubutton"
+           data-options="plain:true,iconCls:'user_suit',text:'{{ user.fullname }}',hasDownArrow:false,menu:'#userMenu'">
+        </a>
+        <a href="#" class="easyui-linkbutton"
+           data-options="plain:true,iconCls:'building',text:'{{ user.org.name }}'"></a>
+        <a href="#" class="easyui-linkbutton"
+           data-options="plain:true,iconCls:'table',text:'{{ today }}'"></a>
+        <a href="{% url 'imgs:logout' %}" class="easyui-linkbutton"
+           data-options="plain:true,iconCls:'door_out',text:'注销'"></a>
+    </div>
+</div>
+<div data-options="region:'west',border:true" title="主菜单" style="width: 150px; padding: 10px">
+    <ul id="mm">
+    </ul>
+</div>
+<div id="mt" data-options="region:'center',border:false" class="easyui-tabs"></div>
+<div data-options="region:'south',border:true"
+     style="height: 30px; line-height: 25px; text-align: center; vertical-align: center;">
+    财务凭证电子化管理系统V1.0 版权所有©️中国人民银行宜昌市中心支行
+</div>
+
+<div id="userMenu">
+    <div data-options="iconCls:'key_go'" onclick="showChangePwdDlg()">修改密码
+    </div>
+    <div class="menu-sep"></div>
+    <div data-options="iconCls:'icon-redo'">Redo</div>
+</div>
+
+<div id="changePwdDlg" class="easyui-dialog" style="width: 400px" title="修改密码" closed="true"
+     modal="true" buttons="#changePwdDlg-buttons">
+    <form id="changePwdFm" method="post" enctype="application/x-www-form-urlencoded" data-options="iframe:true"
+          style="margin: 0; padding: 20px 50px">
+        {% csrf_token %}
+        <div style="margin-bottom: 20px; font-size: 14px; border-bottom: 1px solid #ccc">修改密码</div>
+        <div style="margin-bottom: 10px">
+            <input id="id_old_password" name="old_password" class="easyui-passwordbox"
+                   data-options="label:'旧密码:'" style="width:99%">
+        </div>
+        <div style="margin-bottom: 10px">
+            <input id="id_new_password1" name="new_password1" class="easyui-passwordbox"
+                   data-options="label:'新密码:'" style="width:99%">
+        </div>
+        <div style="margin-bottom: 10px">
+            <input id="id_new_password2" name="new_password2" class="easyui-passwordbox"
+                   data-options="label:'确认密码:'" style="width:99%">
+        </div>
+        <div style="margin-bottom: 10px">
+            注意：密码至少为8位，且必须包含字母、数字
+        </div>
+    </form>
+</div>
+<div id="changePwdDlg-buttons">
+    <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="disk" onclick="changePwd()"
+       style="width: 90px">确定</a> <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="cancel"
+                                     onclick="javascript:$('#changePwdDlg').dialog('close')"
+                                     style="width: 90px">取消</a>
+</div>
+</body>
+</html>

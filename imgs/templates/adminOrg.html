@@ -1,0 +1,156 @@
+{% extends "base.html" %} {% block title %}机构管理{% endblock %} {% block content %}
+    {% load static %}
+    <script type="text/javascript" src="{% static 'js/number.js' %}"></script>
+    <script type="text/javascript">
+        var url;
+
+        $(document).ready(function () {
+            $('#dg').datagrid({
+                url: "{% url 'imgs:pageOrg' %}",
+                method: 'get',
+                fit: true,
+                fitColumns: true,
+                striped: true,
+                singleSelect: true,
+                pagination: true,
+                pageList: [20, 30, 40, 50],
+                pageSize: 20,
+                toolbar: '#tb',
+                rownumbers: true,
+                idField: 'id',
+                columns: [[{
+                    field: 'ck',
+                    checkbox: true,
+                    width: 80,
+                    fixed: true
+                }, {
+                    field: 'code',
+                    title: '机构代码',
+                    width: 200,
+                    halign: 'center',
+                    align: 'center',
+                    fixed: true
+                }, {
+                    field: 'name',
+                    title: '机构名称',
+                    width: 100,
+                    halign: 'center',
+                    align: 'center',
+                }, {
+                    field: 'seq',
+                    title: '排序',
+                    width: 50,
+                    halign: 'center',
+                    align: 'right',
+                    fixed: true
+                }]]
+            });
+
+            $('#addBtn').linkbutton({
+                iconCls: 'building_add',
+                text: '录入',
+                plain: true,
+                onClick: function () {
+                    $('#fm').form('reset');
+                    $('#dlg').dialog('open');
+                    url = "{% url 'imgs:saveOrg' %}";
+                }
+            });
+
+            $('#editBtn').linkbutton({
+                iconCls: 'building_edit',
+                text: '修改',
+                plain: true,
+                onClick: function () {
+                    var row = $('#dg').datagrid('getSelected');
+                    if (row) {
+                        $('#fm').form('reset');
+                        $('#fm').form('load', row);
+                        $('#dlg').dialog('open');
+                        url = "{% url 'imgs:updateOrg' %}";
+                    } else {
+                        $.messager.alert('操作结果', '请选择要修改的账务记录！', 'error');
+                    }
+                }
+            });
+
+            $('#delBtn').linkbutton({
+                iconCls: 'building_delete',
+                text: '删除',
+                plain: true,
+                onClick: function () {
+                    var row = $('#dg').datagrid('getSelected');
+                    if (row) {
+                        $.messager.confirm('确认', '确认删除?', function (ok) {
+                            if (ok) {
+                                $.ajax({
+                                    url: "{% url 'imgs:delOrg' %}",
+                                    data: {
+                                        id: row.id
+                                    },
+                                    success: function (rst) {
+                                        $.messager.alert('操作结果', rst.msg, 'info');
+                                        $('#dg').datagrid('reload');
+                                    }
+                                });
+                            }
+                        });
+                    } else {
+                        $.messager.alert('操作结果', '请选择要删除的账务记录！', 'error');
+                    }
+                }
+            });
+        });
+    </script>
+
+    <script type="text/javascript">
+        function saveOrg() {
+            $('#fm').form('submit', {
+                url: url,
+                ajax: true,
+                onSubmit: function () {
+                    return $(this).form('validate');
+                },
+                success: function (data) {
+                    var d = eval('(' + data + ')');
+                    $.messager.alert('操作结果', d.msg, 'info', function () {
+                        if (d.rst) {
+                            $('#dlg').dialog('close');
+                            $('#fm').form('reset');
+                            $('#dg').datagrid('load');
+                        }
+                    });
+                }
+            });
+        }
+    </script>
+
+    <table id="dg"></table>
+    <div id="tb">
+        <a id="addBtn" href="#"></a> <a id="editBtn" href="#"></a> <a id="delBtn" href="#"></a>
+    </div>
+    <div id="dlg" class="easyui-dialog" style="width: 600px" title="添加/修改机构信息" closed="true"
+         modal="true" buttons="#dlg-buttons">
+        <form id="fm" method="post" style="margin: 0; padding: 20px 50px">
+            {% csrf_token %} <input type="hidden" id="id" name="id">
+            <div style="margin-bottom: 20px; font-size: 14px; border-bottom: 1px solid #ccc">机构信息</div>
+            <div style="margin-bottom: 10px;">
+                <input id="name" name="name" class="easyui-textbox"
+                       data-options="required:true,label:'机构名称:'" style="width: 99%">
+            </div>
+            <div style="margin-bottom: 10px">
+                <input
+                        id="code" name="code" class="easyui-textbox"
+                        data-options="required:true,label:'机构代码:{{ orgCode }}'" style="width: 49%">
+                <input id="seq" name="seq" class="easyui-numberbox"
+                       data-options="required:true,label:'顺&nbsp;&nbsp;&nbsp;序:',labelAlign:'right'" style="width: 49%">
+            </div>
+        </form>
+    </div>
+    <div id="dlg-buttons">
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="disk" onclick="saveOrg()"
+           style="width: 90px">保存</a> <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="cancel"
+                                         onclick="javascript:$('#dlg').dialog('close')" style="width: 90px">取消</a>
+    </div>
+
+{% endblock %}

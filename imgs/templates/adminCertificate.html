@@ -1,0 +1,529 @@
+{% extends "base.html" %} {% block title %}凭证管理{% endblock %} {% block content %}
+    {% load static %}
+    <script type="text/javascript" src="{% static 'js/number.js' %}"></script>
+    <script type="text/javascript">
+        var url;
+
+        $.ajaxSetup({
+            data: {
+                csrfmiddlewaretoken: '{{ csrf_token }}'
+            },
+        });
+
+        $(document).ready(function () {
+            $('#dg').datagrid({
+                url: "{% url 'imgs:pageCertificate' %}",
+                queryParams: {
+                    scope: '{{ scope }}'
+                },
+                method: 'post',
+                fit: true,
+                fitColumns: true,
+                striped: true,
+                singleSelect: true,
+                pagination: true,
+                pageList: [20, 30, 40, 50],
+                pageSize: 20,
+                toolbar: '#tb',
+                rownumbers: true,
+                idField: 'id',
+                columns: [[{
+                    field: 'ck',
+                    checkbox: true,
+                    width: 80,
+                    fixed: true
+                }, {
+                    field: 'bookedDate',
+                    title: '记账日期',
+                    width: 100,
+                    styler: function (value, row, index) {
+                        if (row.rejected) {
+                            return 'background-color:#ffee00;color:red;';
+                        }
+                    },
+                    halign: 'center',
+                    align: 'center',
+                    fixed: true
+                }, {
+                    field: 'sn',
+                    title: '流水号',
+                    width: 100,
+                    halign: 'center',
+                    align: 'center',
+                    fixed: true
+                }, {
+                    field: 'orgName',
+                    title: '所属机构',
+                    width: 100,
+                    halign: 'center',
+                    align: 'center',
+                    fixed: true
+                }, {
+                    field: 'accountName',
+                    title: '会计科目',
+                    width: 150,
+                    halign: 'center',
+                    align: 'left',
+                    fixed: true
+                }, {
+                    field: 'accountDetail',
+                    title: '科目明细',
+                    width: 200,
+                    halign: 'center',
+                    align: 'left'
+                }, {
+                    field: 'amount',
+                    title: '金额',
+                    width: 150,
+                    halign: 'center',
+                    align: 'right',
+                    fixed: true,
+                    formatter: function (value, row, index) {
+                        return '￥' + number_format(value, 2, '.', ',');
+                    }
+                }, {
+                    field: 'attachmentNo',
+                    title: '凭证张数',
+                    width: 60,
+                    halign: 'center',
+                    align: 'center',
+                    fixed: true
+                }, {
+                    field: 'uploaderName',
+                    title: '录入人员',
+                    width: 100,
+                    halign: 'center',
+                    align: 'center',
+                    fixed: true
+                }]]
+            });
+
+            {% if scope == 'todo' %}
+                $('#addBtn').linkbutton({
+                    iconCls: 'coins_add',
+                    text: '录入',
+                    plain: true,
+                    onClick: function () {
+                        $('#fm').form('reset');
+                        $('#dlg').dialog('open');
+                        url = "{% url 'imgs:saveCertificate' %}";
+                    }
+                });
+
+                $('#editBtn').linkbutton({
+                    iconCls: 'coins',
+                    text: '修改',
+                    plain: true,
+                    onClick: function () {
+                        var row = $('#dg').datagrid('getSelected');
+                        if (row && !row.submitted) {
+                            $('#fm').form('reset');
+                            $('#fm').form('load', row);
+                            $('#account').combobox('setValue', row.accountId);
+                            $('#dlg').dialog('open');
+                            url = "{% url 'imgs:updateCertificate' %}";
+                        } else {
+                            $.messager.alert('操作结果', '请选择要修改的账务记录！', 'error');
+                        }
+                    }
+                });
+
+                $('#delBtn').linkbutton({
+                    iconCls: 'coins_delete',
+                    text: '删除',
+                    plain: true,
+                    onClick: function () {
+                        var row = $('#dg').datagrid('getSelected');
+                        if (row && !row.submitted) {
+                            $.messager.confirm('确认', '确认删除?', function (ok) {
+                                if (ok) {
+                                    $.ajax({
+                                        url: "{% url 'imgs:delCertificate' %}",
+                                        data: {
+                                            id: row.id
+                                        },
+                                        success: function (rst) {
+                                            $.messager.alert('操作结果', rst.msg, 'info');
+                                            $('#dg').datagrid('reload');
+                                        }
+                                    });
+                                }
+                            });
+                        } else {
+                            $.messager.alert('操作结果', '请选择要删除的账务记录！', 'error');
+                        }
+                    }
+                });
+
+                $('#importBtn').linkbutton({
+                    iconCls: 'table_add',
+                    text: '批量导入',
+                    plain: true,
+                    onClick: function () {
+                        $('#uploadCertFm').form('reset');
+                        $('#uploadCertDlg').dialog('open');
+                    },
+                });
+
+                $('#uploadBtn').linkbutton({
+                    iconCls: 'picture_add',
+                    text: '上传影像',
+                    plain: true,
+                    onClick: function () {
+                        var row = $('#dg').datagrid('getSelected');
+                        if (row && !row.submitted) {
+                            showUploadForm(row.id);
+                        } else {
+                            $.messager.alert('操作结果', '请选择要上传影像的账务记录！', 'error');
+                        }
+                    },
+                });
+
+                $('#submitBtn').linkbutton({
+                    iconCls: 'tick',
+                    text: '提交',
+                    plain: true,
+                    onClick: function () {
+                        var row = $('#dg').datagrid('getSelected');
+                        if (row && !row.submitted) {
+                            if (row.attachmentNo > 0)
+                                $.messager.confirm('确认', '提交后将不能再修改，确认提交到上级行?', function (ok) {
+                                    if (ok) {
+                                        $.ajax({
+                                            url: "{% url 'imgs:submitCertificate' %}",
+                                            data: {
+                                                id: row.id
+                                            },
+                                            success: function (rst) {
+                                                $.messager.alert('操作结果', rst.msg, 'info');
+                                                $('#dg').datagrid('reload');
+                                            }
+                                        });
+                                    }
+                                });
+                            else {
+                                $.messager.alert('操作结果', '账务记录未上传凭证影像！', 'error');
+                            }
+                        } else {
+                            $.messager.alert('操作结果', '请选择要提交的账务记录！', 'error');
+                        }
+                    }
+                });
+            {% endif %}
+
+            {% if scope == 'belonged' %}
+                $('#rejectBtn').linkbutton({
+                    iconCls: 'page_cancel',
+                    text: '退回修改',
+                    plain: true,
+                    onClick: function () {
+                        var row = $('#dg').datagrid('getSelected');
+                        if (row) {
+                            $.messager.prompt({
+                                title: '确认退回',
+                                msg: '请输入退回理由：',
+                                fn: function (text) {
+                                    if (text) {
+                                        $.ajax({
+                                            url: "{% url 'imgs:rejectCertificate' %}",
+                                            method: 'POST',
+                                            data: {
+                                                reason: text,
+                                                certificate: row.id
+                                            },
+                                            success: function (rst) {
+                                                var d = eval('(' + rst + ')');
+                                                $.messager.alert('操作结果', d.msg, 'info');
+                                                $('#dg').datagrid('reload');
+                                            }
+                                        });
+                                    }
+                                }
+                            });
+                        } else {
+                            $.messager.alert('操作结果', '请选择要退回的账务记录！', 'error');
+                        }
+                    }
+                });
+            {% endif %}
+
+            $('#viewImgBtn').linkbutton({
+                iconCls: 'image_magnify',
+                text: '查看影像',
+                plain: true,
+                onClick: function () {
+                    var row = $('#dg').datagrid('getSelected');
+                    if (row) {
+                        url = "{% url 'imgs:adminCertificateImg' %}?certId=" + row.id;
+                        $('#listImgWindow').window('refresh', url);
+                        $('#listImgWindow').window('open');
+                    } else {
+                        $.messager.alert('操作结果', '请选择要查看影像的账务记录！', 'error');
+                    }
+                }
+            });
+
+            $('#searchDlgBtn').linkbutton({
+                iconCls: 'search',
+                text: '查询',
+                plain: true,
+                onClick: function () {
+                    $('#searchFm').form('reset');
+                    $('#searchDlg').dialog('open');
+                },
+            });
+
+            $('#searchBtn').linkbutton({
+                iconCls: 'search',
+                text: '筛选',
+                plain: false,
+                width: 90,
+                onClick: function () {
+                    $('#dg').datagrid('load', {
+                        orgId: $('#orgSelector').combobox('getValue'),
+                        accountId: $('#accountSelector').combobox('getValue'),
+                        detail: $('#detailSelector').textbox('getValue'),
+                        beginDate: $('#beginDateSelector').datebox('getValue'),
+                        endDate: $('#endDateSelector').datebox('getValue'),
+                        beginAmount: $('#beginAmountSelector').numberbox('getValue'),
+                        endAmount: $('#endAmountSelector').numberbox('getValue'),
+                        scope: '{{ scope }}'
+                    });
+                }
+            });
+        });
+    </script>
+
+    <script type="text/javascript">
+        function saveCertificate() {
+            $('#fm').form('submit', {
+                url: url,
+                ajax: true,
+                onSubmit: function () {
+                    return $(this).form('validate');
+                },
+                success: function (data) {
+                    var d = eval('(' + data + ')');
+                    $.messager.alert('操作结果', d.msg, 'info', function () {
+                        if (d.rst) {
+                            $('#dlg').dialog('close');
+                            $('#fm').form('reset');
+                            $('#dg').datagrid('load');
+                            if (typeof(d.certId) != "undefined") {
+                                $.messager.confirm('确定', '是否立即上传影像？', function (r) {
+                                    if (r) {
+                                        showUploadForm(d.certId);
+                                    }
+                                });
+                            }
+                        }
+                    });
+                }
+            });
+        }
+
+        function showUploadForm(certId) {
+            $('#uploadImgFm').form('reset');
+            $('#certId').val(certId);
+            $('#uploadImgDlg').dialog('open');
+        }
+
+        function uploadImg() {
+            $.messager.progress();
+            $('#uploadImgFm').form('submit', {
+                url: "{% url 'imgs:uploadImg' %}",
+                {#ajax: true,#}
+                onSubmit: function () {
+                    var isValid = $(this).form('validate');
+                    if (isValid) {
+                        $('#uploadImgBtn').linkbutton('disable');
+                    }
+                    return isValid;
+                },
+                success: function (data) {
+                    $.messager.progress('close');
+                    $('#uploadImgBtn').linkbutton('enable');
+                    var d = eval('(' + data + ')');
+                    $.messager.alert('操作结果', d.msg, 'info', function () {
+                        if (d.rst) {
+                            $('#uploadImgDlg').dialog('close');
+                            $('#uploadImgFm').form('reset');
+                            $('#dg').datagrid('reload');
+                            $.messager.confirm('确定', '是否继续上传影像？', function (r) {
+                                if (r) {
+                                    showUploadForm(d.certId);
+                                }
+                            });
+                        }
+                    });
+                },
+                error: function (xhr, errorType, error) {
+                    $.messager.progress('close');
+                    alert(xhr + ":" + errorType + ":" + error);
+                }
+            });
+        }
+    </script>
+
+    <table id="dg"></table>
+    <div id="tb">
+        {% if scope == 'todo' %}
+            <a id="addBtn" href="#"></a>
+            <a id="editBtn" href="#"></a>
+            <a id="delBtn" href="#"></a>
+            <a id="importBtn" href="#"></a>
+            <a id="uploadBtn" href="#"></a>
+            <a id="submitBtn" href="#"></a>
+        {% endif %}
+        <a id="viewImgBtn" href="#"></a>
+        {% if scope == 'belonged' %}
+            <a id="rejectBtn" href="#"></a>
+        {% endif %}
+        <a id="searchDlgBtn" href="#"></a>
+    </div>
+
+    <div id="dlg" class="easyui-dialog" style="width: 600px" title="添加/修改用户信息" closed="true"
+         modal="true" buttons="#dlg-buttons">
+        <form id="fm" method="post" style="margin: 0; padding: 20px 50px">
+            {% csrf_token %} <input type="hidden" id="id" name="id">
+            <div style="margin-bottom: 20px; font-size: 14px; border-bottom: 1px solid #ccc">账务信息</div>
+            <div style="margin-bottom: 10px;">
+                <input id="bookedDate" name="bookedDate" class="easyui-datebox"
+                       data-options="required:true,editable:false,label:'记账日期:'" style="width: 49%"> <input
+                    id="sn" name="sn" class="easyui-textbox"
+                    data-options="required:true,label:'流水号:',labelAlign:'right'" style="width: 49%">
+            </div>
+            <div style="margin-bottom: 10px">
+                <input id="account" name="account" class="easyui-combobox" style="width: 49%"
+                       data-options="
+				label:'会计科目:',
+				labelAlign:'left',
+				limitToList:true,
+				editable:true,
+				required:true,
+				valueField:'id',
+				textField:'name',
+				url:'{% url 'imgs:listAccount' %}',
+				method:'get'"/>
+                <input id="amount" name="amount" class="easyui-numberbox"
+                       data-options="required:true,label:'金&nbsp;&nbsp;&nbsp;额:',labelAlign:'right'" style="width: 49%">
+            </div>
+            <div style="margin-bottom: 10px;">
+                <input
+                        id="accountDetail" name="accountDetail" class="easyui-textbox"
+                        data-options="required:true,label:'科目明细:',labelAlign:'left'" style="width: 99%">
+            </div>
+        </form>
+    </div>
+    <div id="dlg-buttons">
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="disk" onclick="saveCertificate()"
+           style="width: 90px">保存</a> <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="cancel"
+                                         onclick="javascript:$('#dlg').dialog('close')" style="width: 90px">取消</a>
+    </div>
+
+    <!-- 上传凭证影像对话框 -->
+    <div id="uploadImgDlg" class="easyui-dialog" style="width: 600px" title="上传凭证影像" closed="true"
+         modal="true" buttons="#uploadImgDlg-buttons">
+        <form id="uploadImgFm" method="post" enctype="multipart/form-data" data-options="iframe:true"
+              style="margin: 0; padding: 20px 50px">
+            {% csrf_token %} <input type="hidden" id="certId" name="certId">
+            <div style="margin-bottom: 20px; font-size: 14px; border-bottom: 1px solid #ccc">上传影像</div>
+            <div style="margin-bottom: 10px">
+                <input id="img" name="img" class="easyui-filebox"
+                       data-options="buttonText:'选择图片文件',label:'凭证影像:',accept:'image/*',required:true"
+                       style="width:99%">
+            </div>
+        </form>
+    </div>
+    <div id="uploadImgDlg-buttons">
+        <a id="uploadImgBtn" href="javascript:void(0)" class="easyui-linkbutton" iconCls="disk"
+           onclick="uploadImg()" style="width: 90px">上传</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="cancel"
+           onclick="javascript:$('#uploadImgDlg').dialog('close')" style="width: 90px">取消</a>
+    </div>
+
+    <!-- 导入账务信息文件对话框 -->
+    <div id="uploadCertDlg" class="easyui-dialog" style="width: 600px" title="导入账务信息文件" closed="true"
+         modal="true" buttons="#uploadCertDlg-buttons">
+        <form id="uploadCertFm" method="post" enctype="multipart/form-data" data-options="iframe:true"
+              style="margin: 0; padding: 20px 50px">
+            {% csrf_token %}
+            <div style="margin-bottom: 20px; font-size: 14px; border-bottom: 1px solid #ccc">导入账务信息文件</div>
+            <div style="margin-bottom: 10px">
+                <input id="certificateFile" name="certificateFile" class="easyui-filebox"
+                       data-options="required:true,buttonText:'选择账务信息文件',label:'导入文件:',accept:'application/vnd.ms-excel'"
+                       style="width:99%">
+            </div>
+        </form>
+    </div>
+    <div id="uploadCertDlg-buttons">
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="disk"
+           onclick="uploadCertFile()" style="width: 90px">上传</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="cancel"
+           onclick="javascript:$('#uploadCertDlg').dialog('close')" style="width: 90px">取消</a>
+    </div>
+
+    <!-- 凭证影像列表窗口 -->
+    <div id="listImgWindow" class="easyui-window" title="查看凭证影像" style="width:750px;height:500px"
+         data-options="iconCls:'image_magnify',modal:true,closed:true">
+    </div>
+
+    <div id="searchDlg" class="easyui-dialog" style="width: 650px" title="账务信息查询" closed="true"
+         modal="false" buttons="#searchDlg-buttons">
+        <form id="searchFm" method="post" style="margin: 0; padding: 20px 50px">
+            {% csrf_token %}
+            <div style="margin-bottom: 20px; font-size: 14px; border-bottom: 1px solid #ccc">账务信息查询</div>
+            <div style="margin-bottom: 10px;">
+                <input id="orgSelector" class="easyui-combobox"
+                       data-options="
+                            width: '49%',
+                            editable: true,
+                            limitToList: true,
+                            method: 'GET',
+                            valueField: 'id',
+                            textField: 'name',
+                            label: '按机构查询',
+                            prompt: '按机构查询',
+                            url: '{% url 'imgs:listSubOrg' %}'
+                        "/>
+                <input id="accountSelector" class="easyui-combobox"
+                       data-options="
+                            width: '49%',
+                            editable: true,
+                            limitToList: true,
+                            method: 'GET',
+                            valueField: 'id',
+                            textField: 'name',
+                            label: '按会计科目查询',
+                            labelAlign: 'right',
+                            prompt: '按会计科目查询',
+                            url: '{% url 'imgs:listAccount' %}'
+                        "/>
+            </div>
+            <div style="margin-bottom: 10px">
+                <input id="beginAmountSelector" class="easyui-numberbox"
+                       data-options="width:'49%',label:'金额大于'"/>
+                <input id="endAmountSelector" class="easyui-numberbox"
+                       data-options="width:'49%',label:'金额小于',labelAlign:'right'"/>
+            </div>
+            <div style="margin-bottom: 10px">
+                <input id="beginDateSelector" class="easyui-datebox"
+                       data-options="width:'49%',label:'账务起始日期',prompt:'账务起始日期'"/>
+                <input id="endDateSelector" class="easyui-datebox"
+                       data-options="width:'49%',label:'账务截止日期',labelAlign:'right',prompt:'账务截止日期'"/>
+            </div>
+            <div style="margin-bottom: 10px;">
+                <input id="detailSelector" class="easyui-textbox"
+                       data-options="width:'99%',label:'按科目明细查询',prompt:'按科目明细查询'"/>
+            </div>
+        </form>
+    </div>
+    <div id="searchDlg-buttons">
+        <a id="searchBtn" href="#"></a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="arrow_refresh"
+           onclick="javascript:$('#searchFm').form('reset')" style="width: 90px">重置条件</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="cancel"
+           onclick="javascript:$('#searchDlg').dialog('close')" style="width: 90px">取消</a>
+    </div>
+{% endblock %}
+

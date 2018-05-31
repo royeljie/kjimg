@@ -1,0 +1,102 @@
+{% extends "base.html" %} {% block title %}查看影像{% endblock %} {% block content %}
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('#imgListDg').datagrid({
+                url: "{% url 'imgs:listCertificateImg' %}?certId={{ certId }}",
+                method: 'get',
+                fit: true,
+                fitColumns: true,
+                striped: true,
+                singleSelect: true,
+                pagination: false,
+                toolbar: '#imgTb',
+                rownumbers: true,
+                idField: 'id',
+                onLoadSuccess: function () {
+                    $('#imgListDg').datagrid('resize')
+                },
+                onDblClickRow: function (index, row) {
+                    var imgUrl = "{% url 'imgs:viewImg' %}";
+                    imgUrl += "?imgId=" + row.id;
+                    imgUrl += "&token=" + (new Date()).getTime();
+                    $('#image').attr("src", imgUrl);
+                    $('#viewImageWindow').window('open');
+                },
+                columns: [[{
+                    field: 'ck',
+                    checkbox: true,
+                    width: 80,
+                    fixed: true
+                }, {
+                    field: 'description',
+                    title: '影像说明',
+                    width: 150,
+                    halign: 'center',
+                    align: 'center',
+                }, {
+                    field: 'uploadTime',
+                    title: '上传时间',
+                    width: 150,
+                    halign: 'center',
+                    align: 'center',
+                    fixed: true
+                }, {
+                    field: 'id',
+                    title: '缩略图',
+                    width: 300,
+                    halign: 'center',
+                    align: 'center',
+                    formatter: function (value) {
+                        var url = "{% url 'imgs:viewThumb' %}?imgId=" + value;
+                        url += "&token=" + (new Date()).getTime();
+                        return '<img src=' + url + ' style="width:300px;" />';
+                    }
+                }]]
+            });
+
+            {% if canDelete %}
+                $('#delImgBtn').linkbutton({
+                    iconCls: 'picture_delete',
+                    text: '删除',
+                    plain: true,
+                    onClick: function () {
+                        var row = $('#imgListDg').datagrid('getSelected');
+                        if (row) {
+                            $.messager.confirm('确认', '确认删除?', function (ok) {
+                                if (ok) {
+                                    $.ajax({
+                                        url: "{% url 'imgs:delCertificateImg' %}",
+                                        data: {
+                                            id: row.id
+                                        },
+                                        success: function (rst) {
+                                            $.messager.alert('操作结果', rst.msg, 'info');
+                                            $('#imgListDg').datagrid('reload');
+                                            $('#dg').datagrid('reload');
+                                        }
+                                    });
+                                }
+                            });
+                        } else {
+                            $.messager.alert('操作结果', '请选择要删除的影像文件！', 'error');
+                        }
+                    }
+                });
+            {% endif %}
+        })
+    </script>
+
+
+    <table id="imgListDg"></table>
+
+    <div id="imgTb">
+        {% if canDelete %}
+            <a id="delImgBtn" href="#"></a>
+        {% endif %}
+    </div>
+
+    <div id="viewImageWindow" class="easyui-window" title="查看凭证影像" style="width:900px;height:550px"
+         data-options="iconCls:'image_magnify',modal:true,closed:true">
+        <img id="image" src="">
+    </div>
+{% endblock %}
