@@ -40,3 +40,11 @@ class SearchCertificateForm(forms.Form):
     detail = forms.CharField()
     beginDate = forms.DateField()
     endDate = forms.DateField()
+
+
+class ParamForm(forms.ModelForm):
+    class Meta:
+        models = models.Param
+        fields = ['id', 'name', 'code', 'val']
+
+

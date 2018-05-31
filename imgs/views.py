@@ -729,3 +729,16 @@ def pageParam(request):
     return JsonResponse(pageObj, safe=False)
 
 
+@staff_member_required
+@require_http_methods(["POST"])
+def updateParam(request):
+    form = ParamForm(request.POST)
+    paramId = form.data['id']
+    paramVal = form.data['val']
+    try:
+        Param.objects.filter(id=paramId).update(val=paramVal)
+        return JsonResponse({"rst": True, "msg": "系统参数更新成功！"}, safe=False, content_type='text/html')
+    except Exception:
+        return JsonResponse({"rst": False, "msg": "系统参数更新失败！"}, safe=False, content_type='text/html')
+
+

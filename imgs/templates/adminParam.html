@@ -46,7 +46,7 @@
             });
 
             $('#editBtn').linkbutton({
-                iconCls: 'application_form_edit',
+                iconCls: 'cog_edit',
                 text: '修改',
                 plain: true,
                 onClick: function () {
@@ -55,9 +55,9 @@
                         $('#fm').form('reset');
                         $('#fm').form('load', row);
                         $('#dlg').dialog('open');
-                        url = "{% url 'imgs:updateAccount' %}";
+                        url = "{% url 'imgs:updateParam' %}";
                     } else {
-                        $.messager.alert('操作结果', '请选择要修改的会计科目！', 'error');
+                        $.messager.alert('操作结果', '请选择要修改的系统参数！', 'error');
                     }
                 }
             });
@@ -65,7 +65,7 @@
     </script>
 
     <script type="text/javascript">
-        function saveAccount() {
+        function saveParam() {
             $('#fm').form('submit', {
                 url: url,
                 ajax: true,
@@ -84,25 +84,6 @@
                 }
             });
         }
-
-        function uploadFile() {
-            $('#uploadFm').form('submit', {
-                url: "{% url 'imgs:importAccount' %}",
-                onSubmit: function () {
-                    return $(this).form('validate');
-                },
-                success: function (data) {
-                    var d = eval('(' + data + ')');
-                    $.messager.alert('操作结果', d.msg, 'info', function () {
-                        if (d.rst) {
-                            $('#uploadDlg').dialog('close');
-                            $('#uploadFm').form('reset');
-                            $('#dg').datagrid('reload');
-                        }
-                    });
-                }
-            });
-        }
     </script>
 
     <table id="dg"></table>
@@ -114,19 +95,22 @@
         <form id="fm" method="post" style="margin: 0; padding: 20px 50px">
             {% csrf_token %} <input type="hidden" id="id" name="id">
             <div style="margin-bottom: 20px; font-size: 14px; border-bottom: 1px solid #ccc">会计科目信息</div>
-            <div style="margin-bottom: 10px">
-                <input
-                        id="code" name="code" class="easyui-textbox"
-                        data-options="required:true,label:'机构代码:{{ orgCode }}'" style="width: 49%">
-            </div>
             <div style="margin-bottom: 10px;">
                 <input id="name" name="name" class="easyui-textbox"
-                       data-options="required:true,label:'机构名称:'" style="width: 99%">
+                       data-options="required:true,editable:false,label:'参数名称:'" style="width: 49%">
+            </div>
+            <div style="margin-bottom: 10px">
+                <input id="code" name="code" class="easyui-textbox"
+                       data-options="required:true,editable:false,label:'参数代码:'" style="width: 49%">
+            </div>
+            <div style="margin-bottom: 10px;">
+                <input id="val" name="val" class="easyui-textbox"
+                       data-options="required:true,label:'参数值:'" style="width: 99%">
             </div>
         </form>
     </div>
     <div id="dlg-buttons">
-        <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="disk" onclick="saveAccount()"
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="disk" onclick="saveParam()"
            style="width: 90px">保存</a> <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="cancel"
                                          onclick="javascript:$('#dlg').dialog('close')" style="width: 90px">取消</a>
     </div>
