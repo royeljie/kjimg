@@ -17,7 +17,7 @@ class OrgAdmin(admin.ModelAdmin):
 
 @admin.register(Certificate)
 class CertificateAdmin(admin.ModelAdmin):
-    list_display = ('org', 'bookedDate', 'sn', 'amount', 'attachmentNo', 'account', 'uploaderName')
+    list_display = ('org', 'bookedDate', 'sn', 'amount', 'attachmentNo', 'accountCode', 'accountName', 'uploaderName')
 
 
 @admin.register(Account)
@@ -30,5 +30,3 @@ class UserAdmin(admin.ModelAdmin):
     list_display = ('fullname', 'username', 'org')
 
 # admin.site.register(UserProfile)
-
-

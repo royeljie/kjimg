@@ -231,7 +231,7 @@ def pageCertificate(request):
         certs = {}
 
     orgId = request.POST.get('orgId', None)
-    accountId = request.POST.get('accountId', None)
+    accountCode = request.POST.get('accountCode', None)
     detail = request.POST.get('detail', None)
     beginDate = request.POST.get('beginDate', None)
     endDate = request.POST.get('endDate', None)
@@ -239,8 +239,8 @@ def pageCertificate(request):
     endAmount = request.POST.get('endAmount', None)
     if orgId is not None and orgId != '':
         certs = certs.filter(org_id=orgId)
-    if accountId is not None and accountId != '':
-        certs = certs.filter(account_id=accountId)
+    if accountCode is not None and accountCode != '':
+        certs = certs.filter(accountCode=accountCode)
     if detail is not None and detail != '':
         certs = certs.filter(accountDetail__contains=detail)
     if beginDate is not None and beginDate != '':
@@ -260,11 +260,10 @@ def pageCertificate(request):
     except EmptyPage:
         showCerts = paginator.page(paginator.num_pages)
     for cert in showCerts:
-        accountName = cert.account.code + ' ' + cert.account.name
+        accountName = cert.accountCode + ' ' + cert.accountName
         certObj = {"id": cert.id, "orgName": cert.org.name, "bookedDate": cert.bookedDate,
-                   "sn": cert.sn, "amount": format(cert.amount, '0.2f'),
-                   "attachmentNo": cert.attachmentNo, "accountId": cert.account.id,
-                   "accountName": accountName, "accountDetail": cert.accountDetail,
+                   "sn": cert.sn, "amount": format(cert.amount, '0.2f'), "attachmentNo": cert.attachmentNo,
+                   "accountCode": cert.accountCode, "accountName": accountName, "accountDetail": cert.accountDetail,
                    "uploaderName": cert.uploaderName, "submitted": cert.submitted, "rejected": cert.rejected}
         certList.append(certObj)
     pageObj = {"total": len(certs), "rows": certList}
@@ -304,15 +303,13 @@ def saveCertificate(request):
 @require_http_methods(["POST"])
 def updateCertificate(request):
     form = CertificateForm(request.POST)
-    certId = form.data['id']
-    bookedDate = form.data['bookedDate']
-    sn = form.data['sn']
-    accountId = form.data['account']
-    amount = form.data['amount']
-    accountDetail = form.data['accountDetail']
     try:
-        Certificate.objects.filter(id=certId).update(bookedDate=bookedDate, sn=sn, account_id=accountId, amount=amount,
-                                                     accountDetail=accountDetail)
+        Certificate.objects.filter(id=form.data['id']).update(bookedDate=form.data['bookedDate'],
+                                                              sn=form.data['sn'],
+                                                              accountCode=form.data['accountCode'],
+                                                              accountName=form.data['accountName'],
+                                                              amount=form.data['amount'],
+                                                              accountDetail=form.data['accountDetail'])
         return JsonResponse({"rst": True, "msg": "账务信息更新成功！"}, safe=False, content_type='text/html')
     except Exception as e:
         raise e
@@ -698,7 +695,8 @@ def listAccount(request):
     accountList = []
     accounts = Account.objects.all()
     for account in accounts:
-        accountList.append({"id": account.id, "name": account.code + '-' + account.name})
+        accountList.append({"id": account.id, "code": account.code, "name": account.name,
+                            "fullname": account.code + ' ' + account.name})
     return JsonResponse(accountList, safe=False)
 
 
@@ -740,5 +738,3 @@ def updateParam(request):
         return JsonResponse({"rst": True, "msg": "系统参数更新成功！"}, safe=False, content_type='text/html')
     except Exception:
         return JsonResponse({"rst": False, "msg": "系统参数更新失败！"}, safe=False, content_type='text/html')
-
-

@@ -67,7 +67,7 @@
                     fixed: true
                 }, {
                     field: 'accountDetail',
-                    title: '科目明细',
+                    title: '摘要',
                     width: 200,
                     halign: 'center',
                     align: 'left'
@@ -119,7 +119,7 @@
                         if (row && !row.submitted) {
                             $('#fm').form('reset');
                             $('#fm').form('load', row);
-                            $('#account').combobox('setValue', row.accountId);
+                            $('#account').combobox('setValue', row.accountCode);
                             $('#dlg').dialog('open');
                             url = "{% url 'imgs:updateCertificate' %}";
                         } else {
@@ -281,7 +281,7 @@
                 onClick: function () {
                     $('#dg').datagrid('load', {
                         orgId: $('#orgSelector').combobox('getValue'),
-                        accountId: $('#accountSelector').combobox('getValue'),
+                        accountCode: $('#accountSelector').combobox('getValue'),
                         detail: $('#detailSelector').textbox('getValue'),
                         beginDate: $('#beginDateSelector').datebox('getValue'),
                         endDate: $('#endDateSelector').datebox('getValue'),
@@ -295,6 +295,11 @@
     </script>
 
     <script type="text/javascript">
+        function setAccountField(newValue,oldValue) {
+            $('#accountCode').val(newValue.code);
+            $('#accountName').val(newValue.name);
+        }
+
         function saveCertificate() {
             $('#fm').form('submit', {
                 url: url,
@@ -386,6 +391,8 @@
          modal="true" buttons="#dlg-buttons">
         <form id="fm" method="post" style="margin: 0; padding: 20px 50px">
             {% csrf_token %} <input type="hidden" id="id" name="id">
+            <input type="hidden" id="accountCode" name="accountCode">
+            <input type="hidden" id="accountName" name="accountName">
             <div style="margin-bottom: 20px; font-size: 14px; border-bottom: 1px solid #ccc">账务信息</div>
             <div style="margin-bottom: 10px;">
                 <input id="bookedDate" name="bookedDate" class="easyui-datebox"
@@ -394,15 +401,16 @@
                     data-options="required:true,label:'流水号:',labelAlign:'right'" style="width: 49%">
             </div>
             <div style="margin-bottom: 10px">
-                <input id="account" name="account" class="easyui-combobox" style="width: 49%"
+                <input id="account" class="easyui-combobox" style="width: 49%"
                        data-options="
 				label:'会计科目:',
 				labelAlign:'left',
 				limitToList:true,
 				editable:true,
 				required:true,
-				valueField:'id',
-				textField:'name',
+				valueField:'code',
+				textField:'fullname',
+				onSelect:setAccountField,
 				url:'{% url 'imgs:listAccount' %}',
 				method:'get'"/>
                 <input id="amount" name="amount" class="easyui-numberbox"
@@ -492,8 +500,8 @@
                             editable: true,
                             limitToList: true,
                             method: 'GET',
-                            valueField: 'id',
-                            textField: 'name',
+                            valueField: 'code',
+                            textField: 'fullname',
                             label: '按会计科目查询',
                             labelAlign: 'right',
                             prompt: '按会计科目查询',

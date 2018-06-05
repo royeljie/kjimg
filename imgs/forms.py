@@ -5,7 +5,7 @@ from imgs import models
 class CertificateForm(forms.ModelForm):
     class Meta:
         model = models.Certificate
-        fields = ['bookedDate', 'sn', 'amount', 'account', 'accountDetail']
+        fields = ['bookedDate', 'sn', 'amount', 'accountCode', 'accountName', 'accountDetail']
 
 
 class OrgForm(forms.ModelForm):
