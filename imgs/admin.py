@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import Menu, Org, UserProfile, Certificate, Account
+from .models import Menu, Org, UserProfile, Certificate
 
 
 # Register your models here.
@@ -17,12 +17,12 @@ class OrgAdmin(admin.ModelAdmin):
 
 @admin.register(Certificate)
 class CertificateAdmin(admin.ModelAdmin):
-    list_display = ('org', 'bookedDate', 'sn', 'amount', 'attachmentNo', 'accountCode', 'accountName', 'uploaderName')
+    list_display = ('org', 'bookedDate', 'sn', 'attachmentNo', 'uploaderName')
 
 
-@admin.register(Account)
-class AccountAdmin(admin.ModelAdmin):
-    list_display = ('code', 'name')
+# @admin.register(Account)
+# class AccountAdmin(admin.ModelAdmin):
+#     list_display = ('code', 'name')
 
 
 @admin.register(UserProfile)

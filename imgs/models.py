@@ -1,7 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import User, AbstractUser
-# from .custom_field import ListField
 
+
+# from .custom_field import ListField
 
 
 # Create your models here.
@@ -50,29 +51,29 @@ class UserProfile(AbstractUser):
         return self.fullname
 
 
-class Account(models.Model):
-    code = models.CharField('科目代码', max_length=10, null=False, blank=False, unique=True)
-    name = models.CharField('科目名称', max_length=20, null=False, blank=False)
-
-    def __str__(self):
-        return self.code + " " + self.name
-
-    class Meta:
-        verbose_name = "会计科目"
-        verbose_name_plural = verbose_name
-        ordering = ['code']
+# class Account(models.Model):
+#     code = models.CharField('科目代码', max_length=10, null=False, blank=False, unique=True)
+#     name = models.CharField('科目名称', max_length=20, null=False, blank=False)
+#
+#     def __str__(self):
+#         return self.code + " " + self.name
+#
+#     class Meta:
+#         verbose_name = "会计科目"
+#         verbose_name_plural = verbose_name
+#         ordering = ['code']
 
 
 class Certificate(models.Model):
     org = models.ForeignKey('Org', on_delete=models.PROTECT, null=False, default=1)
     bookedDate = models.DateField('记账日期')
     sn = models.CharField('流水号', max_length=15, null=False, blank=False)
-    amount = models.DecimalField('金额', max_digits=10, decimal_places=2)
+    # amount = models.DecimalField('金额', max_digits=10, decimal_places=2)
     attachmentNo = models.PositiveSmallIntegerField('附件张数', null=False, blank=False)
     # account = models.ForeignKey('Account', on_delete=models.PROTECT, null=False)
-    accountCode = models.CharField('科目代码', max_length=10, null=False, blank=False, default='1001')
-    accountName = models.CharField('科目名称', max_length=50, null=False, blank=False, default='未指定')
-    accountDetail = models.CharField('科目明细', max_length=50, null=True, blank=True)
+    # accountCode = models.CharField('科目代码', max_length=10, null=False, blank=False, default='1001')
+    # accountName = models.CharField('科目名称', max_length=50, null=False, blank=False, default='未指定')
+    # accountDetail = models.CharField('科目明细', max_length=50, null=True, blank=True)
     uploaderName = models.CharField('录入人', max_length=10, null=False, blank=False)
     submitted = models.BooleanField('是否提交', default=False)
     rejected = models.BooleanField('是否退回', default=False)
@@ -106,9 +107,10 @@ class RejectInfo(models.Model):
     handled = models.BooleanField('是否已处理', default=False)
     certificate = models.ForeignKey('Certificate', on_delete=models.CASCADE, null=False)
 
-    verbose_name = "退回信息"
-    verbose_name_plural = verbose_name
-    ordering = ['time']
+    class Meta:
+        verbose_name = "退回信息"
+        verbose_name_plural = verbose_name
+        ordering = ['time']
 
 
 class Param(models.Model):
@@ -116,9 +118,7 @@ class Param(models.Model):
     code = models.CharField('参数代码', max_length=20, null=False, blank=False, unique=True)
     val = models.CharField('参数值', max_length=250, null=False, blank=False)
 
-    verbose_name = "系统参数"
-    verbose_name_plural = verbose_name
-    ordering = ['code']
-
-
-
+    class Meta:
+        verbose_name = "系统参数"
+        verbose_name_plural = verbose_name
+        ordering = ['code']

@@ -231,26 +231,26 @@ def pageCertificate(request):
         certs = {}
 
     orgId = request.POST.get('orgId', None)
-    accountCode = request.POST.get('accountCode', None)
-    detail = request.POST.get('detail', None)
+    # accountCode = request.POST.get('accountCode', None)
+    # detail = request.POST.get('detail', None)
     beginDate = request.POST.get('beginDate', None)
     endDate = request.POST.get('endDate', None)
     beginAmount = request.POST.get('beginAmount', None)
     endAmount = request.POST.get('endAmount', None)
     if orgId is not None and orgId != '':
         certs = certs.filter(org_id=orgId)
-    if accountCode is not None and accountCode != '':
-        certs = certs.filter(accountCode=accountCode)
-    if detail is not None and detail != '':
-        certs = certs.filter(accountDetail__contains=detail)
+    # if accountCode is not None and accountCode != '':
+    #     certs = certs.filter(accountCode=accountCode)
+    # if detail is not None and detail != '':
+    #     certs = certs.filter(accountDetail__contains=detail)
     if beginDate is not None and beginDate != '':
         certs = certs.filter(bookedDate__gte=beginDate)
     if endDate is not None and endDate != '':
         certs = certs.filter(bookedDate__lte=endDate)
-    if beginAmount is not None and beginAmount != '':
-        certs = certs.filter(amount__gte=beginAmount)
-    if endAmount is not None and endAmount != '':
-        certs = certs.filter(amount__lte=endAmount)
+    # if beginAmount is not None and beginAmount != '':
+    #     certs = certs.filter(amount__gte=beginAmount)
+    # if endAmount is not None and endAmount != '':
+    #     certs = certs.filter(amount__lte=endAmount)
 
     paginator = Paginator(certs, rows)
     try:
@@ -260,10 +260,8 @@ def pageCertificate(request):
     except EmptyPage:
         showCerts = paginator.page(paginator.num_pages)
     for cert in showCerts:
-        accountName = cert.accountCode + ' ' + cert.accountName
         certObj = {"id": cert.id, "orgName": cert.org.name, "bookedDate": cert.bookedDate,
-                   "sn": cert.sn, "amount": format(cert.amount, '0.2f'), "attachmentNo": cert.attachmentNo,
-                   "accountCode": cert.accountCode, "accountName": accountName, "accountDetail": cert.accountDetail,
+                   "sn": cert.sn, "attachmentNo": cert.attachmentNo,
                    "uploaderName": cert.uploaderName, "submitted": cert.submitted, "rejected": cert.rejected}
         certList.append(certObj)
     pageObj = {"total": len(certs), "rows": certList}
@@ -305,11 +303,7 @@ def updateCertificate(request):
     form = CertificateForm(request.POST)
     try:
         Certificate.objects.filter(id=form.data['id']).update(bookedDate=form.data['bookedDate'],
-                                                              sn=form.data['sn'],
-                                                              accountCode=form.data['accountCode'],
-                                                              accountName=form.data['accountName'],
-                                                              amount=form.data['amount'],
-                                                              accountDetail=form.data['accountDetail'])
+                                                              sn=form.data['sn'])
         return JsonResponse({"rst": True, "msg": "账务信息更新成功！"}, safe=False, content_type='text/html')
     except Exception as e:
         raise e
@@ -327,24 +321,24 @@ def delCertificate(request):
         return JsonResponse({"rst": False, "msg": "账务信息删除失败！"}, safe=False)
 
 
-@login_required
-@require_http_methods(["POST"])
-@transaction.atomic
-def importCertificate(request):
-    try:
-        fileObj = request.FILES.get("certificateFile")
-
-        xls = xlrd.open_workbook(file_contents=fileObj.read())
-        sheet = xls.sheets()[0]
-        for i in range(sheet.nrows):
-            code = str(int(sheet.row_values(i)[0]))
-            name = sheet.row_values(i)[1]
-            Account.objects.get_or_create(code=code, name=name)
-
-    except Exception as e:
-        raise e
-        return JsonResponse({"rst": False, "msg": "批量导入账务信息失败！"}, safe=False, content_type='text/html')
-    return JsonResponse({"rst": True, "msg": "批量导入账务信息成功！"}, safe=False, content_type='text/html')
+# @login_required
+# @require_http_methods(["POST"])
+# @transaction.atomic
+# def importCertificate(request):
+#     try:
+#         fileObj = request.FILES.get("certificateFile")
+#
+#         xls = xlrd.open_workbook(file_contents=fileObj.read())
+#         sheet = xls.sheets()[0]
+#         for i in range(sheet.nrows):
+#             code = str(int(sheet.row_values(i)[0]))
+#             name = sheet.row_values(i)[1]
+#             Account.objects.get_or_create(code=code, name=name)
+#
+#     except Exception as e:
+#         raise e
+#         return JsonResponse({"rst": False, "msg": "批量导入账务信息失败！"}, safe=False, content_type='text/html')
+#     return JsonResponse({"rst": True, "msg": "批量导入账务信息成功！"}, safe=False, content_type='text/html')
 
 
 @login_required
@@ -603,101 +597,101 @@ def delOrg(request):
         return JsonResponse({"rst": False, "msg": "机构信息删除失败，无权限！"}, safe=False)
 
 
-@staff_member_required
-@require_http_methods(["GET"])
-def adminAccount(request):
-    return render(request, 'adminAccount.html')
-
-
-@staff_member_required
-@require_http_methods(["GET"])
-def pageAccount(request):
-    accountList = []
-    page = int(request.GET.get('page', 1))
-    rows = int(request.GET.get('rows', 20))
-    accounts = Account.objects.all()
-    paginator = Paginator(accounts, rows)
-    try:
-        showAccounts = paginator.page(page)
-    except PageNotAnInteger:
-        showAccounts = paginator.page(1)
-    except EmptyPage:
-        showAccounts = paginator.page(paginator.num_pages)
-    for account in showAccounts:
-        accountObj = {"id": account.id, "code": account.code, "name": account.name}
-        accountList.append(accountObj)
-    pageObj = {"total": len(accounts), "rows": accountList}
-    return JsonResponse(pageObj, safe=False)
-
-
-@staff_member_required
-@require_http_methods(["POST"])
-def saveAccount(request):
-    form = AccountForm(request.POST)
-    if form.is_valid():
-        try:
-            form.save()
-        except Exception as e:
-            print(e.__traceback__)
-            return JsonResponse({"rst": False, "msg": "会计科目保存失败！"}, safe=False, content_type='text/html')
-        return JsonResponse({"rst": True, "msg": "会计科目保存成功！"}, safe=False, content_type='text/html')
-    else:
-        return JsonResponse({"rst": False, "msg": "会计科目保存失败，科目代码可能重复！"}, safe=False, content_type='text/html')
-
-
-@staff_member_required
-@require_http_methods(["POST"])
-def updateAccount(request):
-    form = AccountForm(request.POST)
-    accountId = form.data['id']
-    accountName = form.data['name']
-    try:
-        Account.objects.filter(id=accountId).update(name=accountName)
-        return JsonResponse({"rst": True, "msg": "会计科目更新成功！"}, safe=False, content_type='text/html')
-    except Exception:
-        return JsonResponse({"rst": False, "msg": "会计科目更新失败！"}, safe=False, content_type='text/html')
-
-
-@staff_member_required
-@require_http_methods(["GET"])
-def delAccount(request):
-    accountId = request.GET['id']
-    account = Account.objects.get(pk=accountId)
-    try:
-        account.delete()
-        return JsonResponse({"rst": True, "msg": "会计科目删除成功！"}, safe=False)
-    except:
-        return JsonResponse({"rst": False, "msg": "会计科目删除失败！"}, safe=False)
-
-
-@staff_member_required
-@require_http_methods(["POST"])
-@transaction.atomic
-def importAccount(request):
-    try:
-        fileObj = request.FILES.get("accountFile")
-
-        xls = xlrd.open_workbook(file_contents=fileObj.read())
-        sheet = xls.sheets()[0]
-        for i in range(sheet.nrows):
-            code = str(int(sheet.row_values(i)[0]))
-            name = sheet.row_values(i)[1]
-            Account.objects.get_or_create(code=code, name=name)
-
-    except Exception:
-        return JsonResponse({"rst": False, "msg": "批量导入会计科目失败！"}, safe=False, content_type='text/html')
-    return JsonResponse({"rst": True, "msg": "批量导入会计科目成功！"}, safe=False, content_type='text/html')
-
-
-@login_required
-@require_http_methods(["GET"])
-def listAccount(request):
-    accountList = []
-    accounts = Account.objects.all()
-    for account in accounts:
-        accountList.append({"id": account.id, "code": account.code, "name": account.name,
-                            "fullname": account.code + ' ' + account.name})
-    return JsonResponse(accountList, safe=False)
+# @staff_member_required
+# @require_http_methods(["GET"])
+# def adminAccount(request):
+#     return render(request, 'adminAccount.html')
+#
+#
+# @staff_member_required
+# @require_http_methods(["GET"])
+# def pageAccount(request):
+#     accountList = []
+#     page = int(request.GET.get('page', 1))
+#     rows = int(request.GET.get('rows', 20))
+#     accounts = Account.objects.all()
+#     paginator = Paginator(accounts, rows)
+#     try:
+#         showAccounts = paginator.page(page)
+#     except PageNotAnInteger:
+#         showAccounts = paginator.page(1)
+#     except EmptyPage:
+#         showAccounts = paginator.page(paginator.num_pages)
+#     for account in showAccounts:
+#         accountObj = {"id": account.id, "code": account.code, "name": account.name}
+#         accountList.append(accountObj)
+#     pageObj = {"total": len(accounts), "rows": accountList}
+#     return JsonResponse(pageObj, safe=False)
+#
+#
+# @staff_member_required
+# @require_http_methods(["POST"])
+# def saveAccount(request):
+#     form = AccountForm(request.POST)
+#     if form.is_valid():
+#         try:
+#             form.save()
+#         except Exception as e:
+#             print(e.__traceback__)
+#             return JsonResponse({"rst": False, "msg": "会计科目保存失败！"}, safe=False, content_type='text/html')
+#         return JsonResponse({"rst": True, "msg": "会计科目保存成功！"}, safe=False, content_type='text/html')
+#     else:
+#         return JsonResponse({"rst": False, "msg": "会计科目保存失败，科目代码可能重复！"}, safe=False, content_type='text/html')
+#
+#
+# @staff_member_required
+# @require_http_methods(["POST"])
+# def updateAccount(request):
+#     form = AccountForm(request.POST)
+#     accountId = form.data['id']
+#     accountName = form.data['name']
+#     try:
+#         Account.objects.filter(id=accountId).update(name=accountName)
+#         return JsonResponse({"rst": True, "msg": "会计科目更新成功！"}, safe=False, content_type='text/html')
+#     except Exception:
+#         return JsonResponse({"rst": False, "msg": "会计科目更新失败！"}, safe=False, content_type='text/html')
+#
+#
+# @staff_member_required
+# @require_http_methods(["GET"])
+# def delAccount(request):
+#     accountId = request.GET['id']
+#     account = Account.objects.get(pk=accountId)
+#     try:
+#         account.delete()
+#         return JsonResponse({"rst": True, "msg": "会计科目删除成功！"}, safe=False)
+#     except:
+#         return JsonResponse({"rst": False, "msg": "会计科目删除失败！"}, safe=False)
+#
+#
+# @staff_member_required
+# @require_http_methods(["POST"])
+# @transaction.atomic
+# def importAccount(request):
+#     try:
+#         fileObj = request.FILES.get("accountFile")
+#
+#         xls = xlrd.open_workbook(file_contents=fileObj.read())
+#         sheet = xls.sheets()[0]
+#         for i in range(sheet.nrows):
+#             code = str(int(sheet.row_values(i)[0]))
+#             name = sheet.row_values(i)[1]
+#             Account.objects.get_or_create(code=code, name=name)
+#
+#     except Exception:
+#         return JsonResponse({"rst": False, "msg": "批量导入会计科目失败！"}, safe=False, content_type='text/html')
+#     return JsonResponse({"rst": True, "msg": "批量导入会计科目成功！"}, safe=False, content_type='text/html')
+#
+#
+# @login_required
+# @require_http_methods(["GET"])
+# def listAccount(request):
+#     accountList = []
+#     accounts = Account.objects.all()
+#     for account in accounts:
+#         accountList.append({"id": account.id, "code": account.code, "name": account.name,
+#                             "fullname": account.code + ' ' + account.name})
+#     return JsonResponse(accountList, safe=False)
 
 
 @staff_member_required

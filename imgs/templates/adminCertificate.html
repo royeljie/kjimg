@@ -35,7 +35,7 @@
                 }, {
                     field: 'bookedDate',
                     title: '记账日期',
-                    width: 100,
+                    width: 200,
                     styler: function (value, row, index) {
                         if (row.rejected) {
                             return 'background-color:#ffee00;color:red;';
@@ -47,7 +47,7 @@
                 }, {
                     field: 'sn',
                     title: '流水号',
-                    width: 100,
+                    width: 150,
                     halign: 'center',
                     align: 'center',
                     fixed: true
@@ -57,41 +57,18 @@
                     width: 100,
                     halign: 'center',
                     align: 'center',
-                    fixed: true
-                }, {
-                    field: 'accountName',
-                    title: '会计科目',
-                    width: 150,
-                    halign: 'center',
-                    align: 'left',
-                    fixed: true
-                }, {
-                    field: 'accountDetail',
-                    title: '摘要',
-                    width: 200,
-                    halign: 'center',
-                    align: 'left'
-                }, {
-                    field: 'amount',
-                    title: '金额',
-                    width: 150,
-                    halign: 'center',
-                    align: 'right',
-                    fixed: true,
-                    formatter: function (value, row, index) {
-                        return '￥' + number_format(value, 2, '.', ',');
-                    }
+                    fixed: false
                 }, {
                     field: 'attachmentNo',
                     title: '凭证张数',
-                    width: 60,
+                    width: 100,
                     halign: 'center',
                     align: 'center',
                     fixed: true
                 }, {
                     field: 'uploaderName',
                     title: '录入人员',
-                    width: 100,
+                    width: 150,
                     halign: 'center',
                     align: 'center',
                     fixed: true
@@ -119,7 +96,6 @@
                         if (row && !row.submitted) {
                             $('#fm').form('reset');
                             $('#fm').form('load', row);
-                            $('#account').combobox('setValue', row.accountCode);
                             $('#dlg').dialog('open');
                             url = "{% url 'imgs:updateCertificate' %}";
                         } else {
@@ -281,12 +257,8 @@
                 onClick: function () {
                     $('#dg').datagrid('load', {
                         orgId: $('#orgSelector').combobox('getValue'),
-                        accountCode: $('#accountSelector').combobox('getValue'),
-                        detail: $('#detailSelector').textbox('getValue'),
                         beginDate: $('#beginDateSelector').datebox('getValue'),
                         endDate: $('#endDateSelector').datebox('getValue'),
-                        beginAmount: $('#beginAmountSelector').numberbox('getValue'),
-                        endAmount: $('#endAmountSelector').numberbox('getValue'),
                         scope: '{{ scope }}'
                     });
                 }
@@ -295,11 +267,6 @@
     </script>
 
     <script type="text/javascript">
-        function setAccountField(newValue,oldValue) {
-            $('#accountCode').val(newValue.code);
-            $('#accountName').val(newValue.name);
-        }
-
         function saveCertificate() {
             $('#fm').form('submit', {
                 url: url,
@@ -400,27 +367,6 @@
                     id="sn" name="sn" class="easyui-textbox"
                     data-options="required:true,label:'流水号:',labelAlign:'right'" style="width: 49%">
             </div>
-            <div style="margin-bottom: 10px">
-                <input id="account" class="easyui-combobox" style="width: 49%"
-                       data-options="
-				label:'会计科目:',
-				labelAlign:'left',
-				limitToList:true,
-				editable:true,
-				required:true,
-				valueField:'code',
-				textField:'fullname',
-				onSelect:setAccountField,
-				url:'{% url 'imgs:listAccount' %}',
-				method:'get'"/>
-                <input id="amount" name="amount" class="easyui-numberbox"
-                       data-options="required:true,label:'金&nbsp;&nbsp;&nbsp;额:',labelAlign:'right'" style="width: 49%">
-            </div>
-            <div style="margin-bottom: 10px;">
-                <input
-                        id="accountDetail" name="accountDetail" class="easyui-textbox"
-                        data-options="required:true,label:'科目明细:',labelAlign:'left'" style="width: 99%">
-            </div>
         </form>
     </div>
     <div id="dlg-buttons">
@@ -494,35 +440,12 @@
                             prompt: '按机构查询',
                             url: '{% url 'imgs:listSubOrg' %}'
                         "/>
-                <input id="accountSelector" class="easyui-combobox"
-                       data-options="
-                            width: '49%',
-                            editable: true,
-                            limitToList: true,
-                            method: 'GET',
-                            valueField: 'code',
-                            textField: 'fullname',
-                            label: '按会计科目查询',
-                            labelAlign: 'right',
-                            prompt: '按会计科目查询',
-                            url: '{% url 'imgs:listAccount' %}'
-                        "/>
-            </div>
-            <div style="margin-bottom: 10px">
-                <input id="beginAmountSelector" class="easyui-numberbox"
-                       data-options="width:'49%',label:'金额大于'"/>
-                <input id="endAmountSelector" class="easyui-numberbox"
-                       data-options="width:'49%',label:'金额小于',labelAlign:'right'"/>
             </div>
             <div style="margin-bottom: 10px">
                 <input id="beginDateSelector" class="easyui-datebox"
                        data-options="width:'49%',label:'账务起始日期',prompt:'账务起始日期'"/>
                 <input id="endDateSelector" class="easyui-datebox"
                        data-options="width:'49%',label:'账务截止日期',labelAlign:'right',prompt:'账务截止日期'"/>
-            </div>
-            <div style="margin-bottom: 10px;">
-                <input id="detailSelector" class="easyui-textbox"
-                       data-options="width:'99%',label:'按科目明细查询',prompt:'按科目明细查询'"/>
             </div>
         </form>
     </div>

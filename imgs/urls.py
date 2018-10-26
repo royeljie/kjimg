@@ -21,7 +21,7 @@ from . import views as imgs_views
 app_name = 'imgs'
 
 urlpatterns = [
-    url('account/list', imgs_views.listAccount, name='listAccount'),
+    # url('account/list', imgs_views.listAccount, name='listAccount'),
     url('cert-img/thumb', imgs_views.viewThumb, name='viewThumb'),
     url('cert-img/view', imgs_views.viewImg, name='viewImg'),
     url('cert-img/upload', imgs_views.uploadImg, name='uploadImg'),
@@ -41,12 +41,12 @@ urlpatterns = [
     url('sys/param/update', imgs_views.updateParam, name='updateParam'),
     url('sys/param/page', imgs_views.pageParam, name='pageParam'),
     url('sys/param', imgs_views.adminParam, name='adminParam'),
-    url('sys/account/import', imgs_views.importAccount, name='importAccount'),
-    url('sys/account/save', imgs_views.saveAccount, name='saveAccount'),
-    url('sys/account/update', imgs_views.updateAccount, name='updateAccount'),
-    url('sys/account/del', imgs_views.delAccount, name='delAccount'),
-    url('sys/account/page', imgs_views.pageAccount, name='pageAccount'),
-    url('sys/account', imgs_views.adminAccount, name='adminAccount'),
+    # url('sys/account/import', imgs_views.importAccount, name='importAccount'),
+    # url('sys/account/save', imgs_views.saveAccount, name='saveAccount'),
+    # url('sys/account/update', imgs_views.updateAccount, name='updateAccount'),
+    # url('sys/account/del', imgs_views.delAccount, name='delAccount'),
+    # url('sys/account/page', imgs_views.pageAccount, name='pageAccount'),
+    # url('sys/account', imgs_views.adminAccount, name='adminAccount'),
     url('sys/org/del', imgs_views.delOrg, name='delOrg'),
     url('sys/org/update', imgs_views.updateOrg, name='updateOrg'),
     url('sys/org/save', imgs_views.saveOrg, name='saveOrg'),

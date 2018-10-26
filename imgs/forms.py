@@ -5,7 +5,7 @@ from imgs import models
 class CertificateForm(forms.ModelForm):
     class Meta:
         model = models.Certificate
-        fields = ['bookedDate', 'sn', 'amount', 'accountCode', 'accountName', 'accountDetail']
+        fields = ['bookedDate', 'sn']
 
 
 class OrgForm(forms.ModelForm):
@@ -20,10 +20,10 @@ class UserForm(forms.ModelForm):
         fields = ['org', 'fullname', 'username', 'is_active']
 
 
-class AccountForm(forms.ModelForm):
-    class Meta:
-        model = models.Account
-        fields = ['id', 'code', 'name']
+# class AccountForm(forms.ModelForm):
+#     class Meta:
+#         model = models.Account
+#         fields = ['id', 'code', 'name']
 
 
 class RejectInfoForm(forms.ModelForm):
