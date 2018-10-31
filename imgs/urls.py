@@ -61,6 +61,7 @@ urlpatterns = [
     url('sys/user', imgs_views.adminUser, name='adminUser'),
     url('org/listSub', imgs_views.listSubOrg, name='listSubOrg'),
     url('org/listSubAndSelf', imgs_views.listSubAndSelfOrg, name='listSubAndSelfOrg'),
+    url('role/list', imgs_views.listRoles, name='listRoles'),
     url('menu/all', imgs_views.listMenus, name='listMenus'),
     url('admin', admin.site.urls),
     url('login', auth_views.login, {"template_name": "login.html"}, name='login'),

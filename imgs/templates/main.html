@@ -116,10 +116,9 @@
 </div>
 
 <div id="userMenu">
-    <div data-options="iconCls:'key_go'" onclick="showChangePwdDlg()">修改密码
-    </div>
+    <div data-options="iconCls:'icon-redo'">{{ user.get_role_display }}</div>
     <div class="menu-sep"></div>
-    <div data-options="iconCls:'icon-redo'">Redo</div>
+    <div data-options="iconCls:'key_go'" onclick="showChangePwdDlg()">修改密码</div>
 </div>
 
 <div id="changePwdDlg" class="easyui-dialog" style="width: 400px" title="修改密码" closed="true"

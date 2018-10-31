@@ -85,7 +85,7 @@ def pageUser(request):
     for user in showUsers:
         date_joined = user.date_joined.strftime('%Y-%m-%d %H:%I:%S')
         userObj = {"id": user.id, "username": user.username, "fullname": user.fullname,
-                   "is_active": user.is_active,
+                   "roleName": user.get_role_display(), "roleId": user.role, "is_active": user.is_active,
                    "active": user.is_active and '有效' or '无效', "date_joined": date_joined, "orgId": user.org.id,
                    "orgName": user.org.name}
         userList.append(userObj)
@@ -120,6 +120,7 @@ def updateUser(request):
     user.fullname = form.data['fullname']
     user.is_active = form.data['is_active']
     user.org = Org.objects.get(id=form.data['org'])
+    user.role = form.data['role']
     try:
         user.save()
         return JsonResponse({"rst": True, "msg": "用户信息更新成功！"}, safe=False, content_type='text/html')
@@ -527,6 +528,8 @@ def listSubAndSelfOrg(request):
     orgs = Org.objects.filter(code__startswith=currentUser.org.code)
     for org in orgs:
         orgList.append({"id": org.id, "code": org.code, "name": org.name, "seq": org.seq})
+    print(orgList.count())
+    # orgList.insert(0, {"id": currentUser.org.id, "code": currentUser.org.code, "name": currentUser.org.name, "seq": currentUser.org.seq})
     return JsonResponse(orgList, safe=False)
 
 
@@ -743,3 +746,13 @@ def updateParam(request):
         return JsonResponse({"rst": True, "msg": "系统参数更新成功！"}, safe=False, content_type='text/html')
     except Exception:
         return JsonResponse({"rst": False, "msg": "系统参数更新失败！"}, safe=False, content_type='text/html')
+
+
+@staff_member_required
+@require_http_methods(["GET"])
+def listRoles(request):
+    roleList = []
+    for role in UserProfile.ROLES:
+        roleList.append({"id": role[0], "name": role[1]})
+    return JsonResponse(roleList, safe=False)
+
