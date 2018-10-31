@@ -27,6 +27,7 @@ urlpatterns = [
     url('cert-img/upload', imgs_views.uploadImg, name='uploadImg'),
     url('cert-img/del', imgs_views.delCertificateImg, name="delCertificateImg"),
     url('cert-img/list', imgs_views.listCertificateImg, name='listCertificateImg'),
+    url('cert-img/test', imgs_views.adminCertImg, name='adminCertImg'),
     url('cert-img', imgs_views.adminCertificateImg, name='adminCertificateImg'),
     url('certificate/countRejected', imgs_views.countRejectedCertificate, name='countRejectedCertificate'),
     url('certificate/reject', imgs_views.rejectCertificate, name='rejectCertificate'),

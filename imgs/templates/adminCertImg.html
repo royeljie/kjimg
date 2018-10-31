@@ -1,0 +1,24 @@
+{% load static %}
+<html>
+<head>
+
+    <link href="{% static 'magnify/fonts/fontawesome-webfont.svg' %}" rel="stylesheet">
+	<link href="{% static 'magnify/css/font-awesome.min.css' %}" rel="stylesheet">
+    <link href="{% static 'magnify/css/htmleaf-demo.css' %}" rel="stylesheet">
+    <link href="{% static 'magnify/dist/jquery.magnify.css' %}" rel="stylesheet">
+    <script src="{% static 'magnify/js/jquery-1.11.0.min.js' %}"></script>
+    <script src="{% static 'magnify/dist/jquery.magnify.js' %}"></script>
+    <script type="text/javascript">
+        $(function () {
+        });
+    </script>
+</head>
+<body>
+<div class="image-set">
+{% for img in imgs %}
+    <img data-magnify="gallery" src="{% url 'imgs:viewThumb' %}?imgId={{ img.id }}"
+         data-src="{% url 'imgs:viewImg' %}?imgId={{ img.id }}">
+{% endfor %}
+</div>
+</body>
+</html>

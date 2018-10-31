@@ -1,0 +1,164 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>jQuery Lightbox（balupton版）图片展示插件使用</title>
+<style type="text/css">
+body{font-size:84%; color:#333333; line-height:1.4;}
+a{color:#34538b;}a:hover{color:#333333; text-decoration:none;}
+.title{text-align:center; font-size:1.8em;}
+#link{background:#f5f5f5; border-left:5px solid #cccccc; padding:4px 0 4px 8px;}
+.zxx_code{padding:10px; margin:5px 0; font-size:12px; background:#eeeeee; border:1px dashed #cccccc; clear:both; zoom:1;}
+.zxx_code pre{margin:0; color:#00F; white-space:pre-wrap; word-wrap:break-word;}
+.params_table{background:#a0b3d6; font-size:12px;}
+.params_table th{background:#f0f3f9; font-weight:bold; text-align:center;}
+.params_table td{background:#f9f9f9; padding:2px 4px;} 
+#footer{padding:30px 0 ; text-align:center;}
+</style>
+</head>
+
+<body>
+<h1 class="title">jQuery Lightbox（balupton版）图片展示插件使用</h1>
+<h3>一、信息</h3>
+<div id="link">
+原作者：<a href="http://www.balupton.com">Benjamin Arthur Lupton</a><br />
+当前版本：v1.3.7最终版<br />
+发布日期：2009年4月25日<br />
+项目地址：<a href="http://jquery.com/plugins/project/jquerylightbox_bal">http://jquery.com/plugins/project/jquerylightbox_bal</a><br />
+翻译编辑：<a href="http://www.zhangxinxu.com/">张鑫旭(zhangxinxu)</a><br />
+中文demo: <a href="demo/">http://www.zhangxinxu.com/jq/balupton_zh/demo/</a>
+</div>
+<h3>二、安装</h3>
+在您页面的头部head中嵌入如下如下代码链接必须的JavaScript文件。
+<div class="zxx_code"><pre>
+&lt;script type="text/javascript" src="js/jquery-1.2.6.pack.js">&lt;/script&gt;
+&lt;script type="text/javascript" src="js/jquery.lightbox.packed.js">&lt;/script&gt;
+</pre></div>
+<p>前面一个JavaScript文件表示JavaScript库，后面一个是lightbox插件。这里的链接路径根据您的实际情况进行修改。</p>
+<h3>三、帮助</h3>
+如果您在使用过程中遇到一些问题无法解决，可以去这里<a href="http://plugins.jquery.com/project/issues/jquerylightbox_bal">http://plugins.jquery.com/project/issues/jquerylightbox_bal</a>，可能会对您有所帮助。
+<h3>四、参数</h3>
+<table width="100%" class="params_table" cellspacing="1" border="0">
+  <tr>
+    <th scope="col">参数名</th>
+    <th scope="col">描述</th>
+    <th scope="col">参数值</th>
+  </tr>
+  <tr>
+    <td>show_helper_text</td>
+    <td>是否显示一些提示文本，例如“点击关闭”等</td>
+    <td>true（默认，显示）, false（不显示）</td>
+  </tr>
+  <tr>
+    <td>show_info</td>
+    <td>是否显示图片的信息</td>
+    <td>"auto"（默认）- 要鼠标经过才会自动显示, true - 强制显示</td>
+  </tr>
+  <tr>
+    <td>show_extended_info</td>
+    <td>是否显示图片扩展的些信息</td>
+    <td>"auto"（默认）- 要鼠标经过才会自动显示, true - 强制显示</td>
+  </tr>
+  <tr>
+    <td>download_link</td>
+    <td>是否显示图片下载的链接</td>
+    <td>true（默认，显示）, false（不显示）</td>
+  </tr>
+  <tr>
+    <td>auto_resize</td>
+    <td>是否在图片尺寸过大时进行大小限制</td>
+    <td>true（默认，限制）, false（不限制）</td>
+  </tr>
+  <tr>
+    <td>colorBlend</td>
+    <td>是否支持colorBlend（颜色混合）</td>
+    <td>null（默认）- 仅当colorBlend检测到时可用, true - 导入colorBlend且使可用, false - 不支持colorBlend</td>
+  </tr>
+  <tr>
+    <td>ie6_support</td>
+    <td>是否支持IE6浏览器</td>
+    <td>true（默认，支持）, false（不支持）</td>
+  </tr>
+  <tr>
+    <td>ie6_upgrade</td>
+    <td>是否给IE6用户显示升级提示信息</td>
+    <td>true（默认，显示）, false（不显示）</td>
+  </tr>
+  <tr>
+    <td>show_linkback</td>
+    <td>是否显示右上角的方向链接</td>
+    <td>true（默认，显示）, false（不显示）</td>
+  </tr>
+  <tr>
+    <td>auto_scroll</td>
+    <td>如何对滚动进行处理</td>
+    <td>"follow"（默认）- 与用户一致, "disabled" - 不允许滚动, "ignore" - 忽略滚动（让lightbox停留在其最初的位置上）</td>
+  </tr>
+  <tr>
+    <td>speed</td>
+    <td>每次图片转换过渡的时间（毫秒）</td>
+    <td>400（默认）, integer（整数）</td>
+  </tr>
+  <tr>
+    <td>baseurl</td>
+    <td>要使用的基本路径用来自动导入需要的文件</td>
+    <td>null（默认）- 自动检测, string - 要手动添加的基本路径</td>
+  </tr>
+  <tr>
+    <td>files</td>
+    <td>JavaScript中链接调用的一些文件，在这些文件（CSS、图片等）重命名时使用</td>
+    <td>Children: js.lightbox, js.colorBlend, css.lightbox, images.prev, images.next, images.blank, images.loading</td>
+  </tr>
+  <tr>
+    <td>text</td>
+    <td>JavaScript中包含的一些文字，在您要翻译的时候使用</td>
+    <td>Children: image, of, close, closeInfo, download, help.close, help.interact, about.text, about.title, about.link</td>
+  </tr>
+  <tr>
+    <td>keys</td>
+    <td>JavaScript文件中包含的些快捷键，在您想重新定义快捷键的时候使用</td>
+    <td>Children: close, prev, next</td>
+  </tr>
+  <tr>
+    <td>opacity</td>
+    <td>覆盖背景层的透明度</td>
+    <td>0.9（默认，90%的透明度）, 数值</td>
+  </tr>
+  <tr>
+    <td>padding</td>
+    <td>图片四周的padding值</td>
+    <td>null（默认）- 自动检测, integer - padding的整数值</td>
+  </tr>
+  <tr>
+    <td>rel</td>
+    <td>链接上要搜寻的rel值，用以应用lightbox效果</td>
+    <td>"lightbox"（默认）- 默认搜寻rel="lightbox", string - 应该搜寻的rel字符串</td>
+  </tr>
+  <tr>
+    <td>auto_relify</td>
+    <td>是否对rel进行一个初始化的扫描自动检测lightboxes</td>
+    <td>true（默认）, false</td>
+  </tr>
+</table>
+<h3>五、参数的应用</h3>
+有两个方法使用这些参数：一是通过js链接，而是通过js代码。例如下面的例子，分别用着两个方法将JavaScript文件中的反向链接隐藏同时将文件中的“图片”文字改成“照片”。
+<p>1. 链接修改法</p>
+<div class="zxx_code"><pre>
+&lt;script type="text/javascript" src="js/jquery.lightbox.min.js?show_linkback=false&amp;text.image=Photo"&gt;&lt;/script&gt;
+</pre></div>
+<p>2. 代码修改法(construct)</p>
+<div class="zxx_code"><pre>
+&lt;script type="text/javascript" src="jquery_lightbox/js/jquery.lightbox.packed.js"&gt;&lt;/script&gt;
+&lt;script type="text/javascript"&gt;
+$(function(){
+	$.Lightbox.construct({
+		show_linkback: false,
+		text: {
+			image: '照片'
+		}
+	});
+});&lt;/script&gt;</pre>
+</div>
+<div id="footer">Copyright &copy; by <a href="http://www.zhangxinxu.com/">张鑫旭-鑫空间-鑫生活</a> | <a href="http://www.zhangxinxu.com/wordpress/?p=575">相关文章</a></div>
+</body>
+</html>

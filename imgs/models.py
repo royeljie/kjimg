@@ -38,9 +38,15 @@ class Org(models.Model):
 
 
 class UserProfile(AbstractUser):
+    ROLES = (
+        ('admin', '系统管理员'),
+        ('user', '录入人'),
+        ('viewer', '查看人'),
+    )
     fullname = models.CharField(max_length=10, null=False, blank=False, verbose_name="姓名")
     org = models.ForeignKey('Org', on_delete=models.PROTECT, null=True, verbose_name="所属机构")
-    date_disabled = models.DateTimeField(verbose_name="停用时间", null=True)
+    date_disabled = models.DateTimeField(null=True, verbose_name="停用时间")
+    role = models.CharField(max_length=10, choices=ROLES, default='viewer', verbose_name="角色")
 
     class Meta:
         verbose_name = "用户"

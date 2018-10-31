@@ -230,7 +230,7 @@
                 onClick: function () {
                     var row = $('#dg').datagrid('getSelected');
                     if (row) {
-                        url = "{% url 'imgs:adminCertificateImg' %}?certId=" + row.id;
+                        url = "{% url 'imgs:adminCertImg' %}?certId=" + row.id;
                         $('#listImgWindow').window('refresh', url);
                         $('#listImgWindow').window('open');
                     } else {
@@ -343,7 +343,7 @@
             <a id="addBtn" href="#"></a>
             <a id="editBtn" href="#"></a>
             <a id="delBtn" href="#"></a>
-            <a id="importBtn" href="#"></a>
+{#            <a id="importBtn" href="#"></a>#}
             <a id="uploadBtn" href="#"></a>
             <a id="submitBtn" href="#"></a>
         {% endif %}

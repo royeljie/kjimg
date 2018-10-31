@@ -1,4 +1,3 @@
-import xlrd
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth import logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
@@ -388,6 +387,18 @@ def adminCertificateImg(request):
     else:
         canDelete = True
     return render(request, 'adminCertificateImg.html', {'certId': certId, 'canDelete': canDelete})
+
+
+@login_required
+def adminCertImg(request):
+    certId = request.GET.get("certId")
+    cert = Certificate.objects.get(id=certId)
+    if cert.submitted:
+        canDelete = False
+    else:
+        canDelete = True
+    imgs = CertificateImg.objects.filter(certificate_id=certId).only('uploadTime', 'description')
+    return render(request, 'adminCertImg.html', {'certId': certId, 'canDelete': canDelete, 'imgs': imgs})
 
 
 @login_required
