@@ -54,16 +54,18 @@
                 }
             });
 
-            $.ajax({
-                url: '{% url 'imgs:countRejectedCertificate' %}',
-                success: function (rst) {
-                    var d = eval('(' + rst + ')');
-                    if (d.count > 0) {
-                        var msg = '您有 <font color="red">' + d.count + '</font> 个待办事务，请在"本级待处理"菜单中处理！';
-                        $.messager.alert('待办事务', msg, 'info');
+            {% if user.role == 'user' %}
+                $.ajax({
+                    url: '{% url 'imgs:countRejectedCertificate' %}',
+                    success: function (rst) {
+                        var d = eval('(' + rst + ')');
+                        if (d.count > 0) {
+                            var msg = '您有 <font color="red">' + d.count + '</font> 个待办事务，请在"本级待处理"菜单中处理！';
+                            $.messager.alert('待办事务', msg, 'info');
+                        }
                     }
-                }
-            })
+                })
+            {% endif %}
         });
 
         function showChangePwdDlg() {
@@ -116,7 +118,7 @@
 </div>
 
 <div id="userMenu">
-    <div data-options="iconCls:'icon-redo'">{{ user.get_role_display }}</div>
+    <div data-options="iconCls:'key'">{{ user.get_role_display }}</div>
     <div class="menu-sep"></div>
     <div data-options="iconCls:'key_go'" onclick="showChangePwdDlg()">修改密码</div>
 </div>

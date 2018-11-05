@@ -36,11 +36,8 @@
                     field: 'bookedDate',
                     title: '记账日期',
                     width: 200,
-                    styler: function (value, row, index) {
-                        if (row.rejected) {
-                            return 'background-color:#ffee00;color:red;';
-                        }
-                    },
+                    styler: showRejectStyle,
+                    formatter: showRejectFormat,
                     halign: 'center',
                     align: 'center',
                     fixed: true
@@ -50,29 +47,50 @@
                     width: 150,
                     halign: 'center',
                     align: 'center',
-                    fixed: true
+                    fixed: true,
+                    styler: showRejectStyle,
+                    formatter: showRejectFormat
                 }, {
                     field: 'orgName',
                     title: '所属机构',
                     width: 100,
                     halign: 'center',
                     align: 'center',
-                    fixed: false
+                    fixed: false,
+                    styler: showRejectStyle,
+                    formatter: showRejectFormat
                 }, {
                     field: 'attachmentNo',
                     title: '凭证张数',
                     width: 100,
                     halign: 'center',
                     align: 'center',
-                    fixed: true
+                    fixed: true,
+                    styler: showRejectStyle,
+                    formatter: showRejectFormat
                 }, {
                     field: 'uploaderName',
                     title: '录入人员',
                     width: 150,
                     halign: 'center',
                     align: 'center',
-                    fixed: true
-                }]]
+                    fixed: true,
+                    styler: showRejectStyle,
+                    formatter: showRejectFormat
+                }]],
+                onLoadSuccess: function () {
+                    $(".easyui-tooltip").tooltip({
+                        showEvent: 'mouseenter',
+                        showDelay: 0,
+                        onShow: function () {
+                            $(this).tooltip('tip').css({
+                                width: '300',
+                                boxShadow: '1px 1px 3px #292929',
+                                borderColor: '#000'
+                            });
+                        }
+                    });
+                }
             });
 
             {% if scope == 'todo' %}
@@ -231,8 +249,9 @@
                     var row = $('#dg').datagrid('getSelected');
                     if (row) {
                         url = "{% url 'imgs:adminCertImg' %}?certId=" + row.id;
-                        $('#listImgWindow').window('refresh', url);
-                        $('#listImgWindow').window('open');
+                        showListImgWindow(url);
+                        {#$('#listImgWindow').window('refresh', url);#}
+                        {#$('#listImgWindow').window('open');#}
                     } else {
                         $.messager.alert('操作结果', '请选择要查看影像的账务记录！', 'error');
                     }
@@ -335,26 +354,58 @@
                 }
             });
         }
+
+        function showRejectStyle(value, row, index) {
+            if (row.rejected) {
+                return 'background-color:#ffee00;color:red;';
+            }
+        }
+
+        function showRejectFormat(value, row, index) {
+            if (row.rejectMsg != undefined) {
+                return '<span title="' + row.rejectMsg + '"  class="easyui-tooltip">' + value + '</span>';
+            } else {
+                return '<span>' + value + '</span>';
+            }
+        }
+
+        function showListImgWindow(url) {
+            var content = '<iframe src="' + url + '" width="100%" height="99%" frameborder="0" scrolling="no"></iframe>';
+            var boarddiv = '<div id="listImgWin" title="影像预览"></div>';//style="overflow:hidden;"可以去掉滚动条
+            $(document.body).append(boarddiv);
+            var listImgWindow = $('#listImgWin').dialog({
+                content: content,
+                width: $(document).width() -100,
+                height: $(document).height() - 10,
+                modal: true,
+                title: '影像预览',
+                iconCls: 'image_magnify',
+                onClose: function () {
+                    $(this).dialog('destroy');//后面可以关闭后的事件
+                }
+            });
+            listImgWindow.dialog('open');
+        }
     </script>
 
     <table id="dg"></table>
     <div id="tb">
-        {% if scope == 'todo' %}
+        {% if scope == 'todo' and user.role == 'user' %}
             <a id="addBtn" href="#"></a>
             <a id="editBtn" href="#"></a>
             <a id="delBtn" href="#"></a>
-{#            <a id="importBtn" href="#"></a>#}
+            {#            <a id="importBtn" href="#"></a>#}
             <a id="uploadBtn" href="#"></a>
             <a id="submitBtn" href="#"></a>
         {% endif %}
         <a id="viewImgBtn" href="#"></a>
-        {% if scope == 'belonged' %}
+        {% if scope == 'belonged' and user.role == 'user' %}
             <a id="rejectBtn" href="#"></a>
         {% endif %}
         <a id="searchDlgBtn" href="#"></a>
     </div>
 
-    <div id="dlg" class="easyui-dialog" style="width: 600px" title="添加/修改用户信息" closed="true"
+    <div id="dlg" class="easyui-dialog" style="width: 600px" title="添加/修改凭证信息" closed="true"
          modal="true" buttons="#dlg-buttons">
         <form id="fm" method="post" style="margin: 0; padding: 20px 50px">
             {% csrf_token %} <input type="hidden" id="id" name="id">
@@ -418,9 +469,9 @@
     </div>
 
     <!-- 凭证影像列表窗口 -->
-    <div id="listImgWindow" class="easyui-window" title="查看凭证影像" style="width:750px;height:500px"
-         data-options="iconCls:'image_magnify',modal:true,closed:true">
-    </div>
+    {#    <div id="listImgWindow" class="easyui-window" title="查看凭证影像" style="width:750px;height:500px"#}
+    {#         data-options="iconCls:'image_magnify',modal:true,closed:true">#}
+    {#    </div>#}
 
     <div id="searchDlg" class="easyui-dialog" style="width: 650px" title="账务信息查询" closed="true"
          modal="false" buttons="#searchDlg-buttons">

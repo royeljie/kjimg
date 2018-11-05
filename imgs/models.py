@@ -13,6 +13,7 @@ class Menu(models.Model):
     url = models.CharField('链接', max_length=300, null=True, blank=True)
     parentMenu = models.ForeignKey('Menu', on_delete=models.PROTECT, null=True, blank=True, related_name="children")
     seq = models.PositiveSmallIntegerField('顺序')
+    roles = models.CharField('权限', max_length=30, null=False, blank=False)
 
     def __str__(self):
         return self.text

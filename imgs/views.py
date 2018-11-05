@@ -40,14 +40,20 @@ def main(request):
 
 @login_required
 def listMenus(request):
-    rootMenus = Menu.objects.filter(parentMenu=None)
+    currentUser = request.user
+    role = currentUser.role
+
+    rootMenus = Menu.objects.filter(parentMenu=None).filter(roles__contains=role)
     menus = []
     for menu in rootMenus:
-        menus.append(formMenuTree(menu))
+        menus.append(formMenuTree(menu, request))
     return JsonResponse(menus, safe=False)
 
 
-def formMenuTree(menu):
+def formMenuTree(menu, request):
+    currentUser = request.user
+    role = currentUser.role
+
     jsonObj = {"id": menu.id, "text": menu.text, "iconCls": menu.iconCls}
     if menu.url != None:
         jsonObj["url"] = menu.url
@@ -56,7 +62,8 @@ def formMenuTree(menu):
     if subMenus.count() > 0:
         jsonObj["state"] = "open"
         for subMenu in subMenus:
-            children.append(formMenuTree(subMenu))
+            if subMenu.roles.find(role) != -1:
+                children.append(formMenuTree(subMenu, request))
         jsonObj["children"] = children
     return jsonObj
 
@@ -260,9 +267,18 @@ def pageCertificate(request):
     except EmptyPage:
         showCerts = paginator.page(paginator.num_pages)
     for cert in showCerts:
-        certObj = {"id": cert.id, "orgName": cert.org.name, "bookedDate": cert.bookedDate,
-                   "sn": cert.sn, "attachmentNo": cert.attachmentNo,
-                   "uploaderName": cert.uploaderName, "submitted": cert.submitted, "rejected": cert.rejected}
+        rejectInfoList = RejectInfo.objects.filter(certificate_id=cert.id).filter(handled=False)
+        rejectMsg = ''
+        for info in rejectInfoList:
+            rejectMsg += '' + info.time.strftime("%Y-%m-%d %H:%I:%S") + '&nbsp;' + info.reason + '<br>'
+        if len(rejectMsg) != 0:
+            certObj = {"id": cert.id, "orgName": cert.org.name, "bookedDate": cert.bookedDate,
+                       "sn": cert.sn, "attachmentNo": cert.attachmentNo, "rejectMsg": rejectMsg,
+                       "uploaderName": cert.uploaderName, "submitted": cert.submitted, "rejected": cert.rejected}
+        else:
+            certObj = {"id": cert.id, "orgName": cert.org.name, "bookedDate": cert.bookedDate,
+                       "sn": cert.sn, "attachmentNo": cert.attachmentNo,
+                       "uploaderName": cert.uploaderName, "submitted": cert.submitted, "rejected": cert.rejected}
         certList.append(certObj)
     pageObj = {"total": len(certs), "rows": certList}
     return JsonResponse(pageObj, safe=False)
@@ -528,8 +544,6 @@ def listSubAndSelfOrg(request):
     orgs = Org.objects.filter(code__startswith=currentUser.org.code)
     for org in orgs:
         orgList.append({"id": org.id, "code": org.code, "name": org.name, "seq": org.seq})
-    print(orgList.count())
-    # orgList.insert(0, {"id": currentUser.org.id, "code": currentUser.org.code, "name": currentUser.org.name, "seq": currentUser.org.seq})
     return JsonResponse(orgList, safe=False)
 
 
@@ -549,7 +563,7 @@ def pageOrg(request):
     orgList = []
     page = int(request.GET.get('page', 1))
     rows = int(request.GET.get('rows', 20))
-    orgs = Org.objects.filter(code__startswith=currentUser.org.code).exclude(code=currentUser.org.code)
+    orgs = Org.objects.filter(code__startswith=currentUser.org.code)  # .exclude(code=currentUser.org.code)
     paginator = Paginator(orgs, rows)
     try:
         showOrgs = paginator.page(page)
@@ -755,4 +769,3 @@ def listRoles(request):
     for role in UserProfile.ROLES:
         roleList.append({"id": role[0], "name": role[1]})
     return JsonResponse(roleList, safe=False)
-
