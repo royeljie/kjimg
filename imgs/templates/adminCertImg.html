@@ -3,24 +3,72 @@
 {% block title %}影像预览{% endblock %} {% block content %}
     <link href="{% static 'lightgallery/css/lightgallery.css' %}" rel="stylesheet">
     <link href="{% static 'lightgallery/css/htmleaf-demo.css' %}" rel="stylesheet">
-    {#    <script src="{% static 'lightgallery/js/jquery-1.11.0.min.js' %}"></script>#}
     <script src="{% static 'lightgallery/js/lightgallery-all.min.js' %}"></script>
     <script type="text/javascript">
+        var imgId = null;
+
         $(document).ready(function () {
             $('#lightgallery').lightGallery();
+
+            {% if user.role == 'user' %}
+                $('img.img-responsive').bind('contextmenu', function (e) {
+                    e.preventDefault();
+                    imgId = e.currentTarget.id;
+                    $('#context-menu').menu('show', {
+                        left: e.pageX,
+                        top: e.pageY
+                    });
+                });
+            {% endif %}
         });
+
+        function menuHandler(item) {
+            if (item.name == 'delete' && imgId != null) {
+                $.messager.confirm('确认', '确认删除?', function (ok) {
+                        if (ok) {
+                            $.ajax({
+                                url: "{% url 'imgs:delCertificateImg' %}",
+                                data: {
+                                    id: imgId
+                                },
+                                success: function (rst) {
+                                    $.messager.alert({
+                                        title: '操作结果',
+                                        msg: rst.msg,
+                                        icon: 'info',
+                                        fn: function () {
+                                            parent.reloadDg();
+                                            window.location.reload();
+                                        }
+                                    });
+                                }
+                            });
+                        }
+                    }
+                )
+                ;
+            } else {
+                $.messager.alert('操作结果', '请选择要删除的影像图片！', 'error');
+            }
+        }
     </script>
-    <div class="demo-gallery" style="height: 150px;">
+    <div id="div" class="demo-gallery" style="height: 150px;">
         <ul id="lightgallery" class="list-unstyled row">
             {% for img in imgs %}
-                <li data-src="{% url 'imgs:viewImg' %}?imgId={{ img.id }}"
+                <li id="li{{ img.id }}" data-src="{% url 'imgs:viewImg' %}?imgId={{ img.id }}"
                     data-sub-html="<h4>影像描述</h4><p>{{ img.description }}</p>">
-                    <a href="">
-                        <img class="img-responsive" title="{{ img.description }}"
+                    <a id="a{{ img.id }}" href="">
+                        <img id="img{{ img.id }}" class="img-responsive" title="{{ img.description }}"
                              src="{% url 'imgs:viewThumb' %}?imgId={{ img.id }}">
                     </a>
                 </li>
             {% endfor %}
         </ul>
     </div>
+
+    {% if user.role == 'user' %}
+        <div id="context-menu" class="easyui-menu" data-options="onClick:menuHandler" style="width:120px;">
+            <div data-options="name:'delete',iconCls:'picture_delete'">删除</div>
+        </div>
+    {% endif %}
 {% endblock %}

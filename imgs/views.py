@@ -452,16 +452,24 @@ def listCertificateImg(request):
 @require_http_methods(["GET"])
 @transaction.atomic
 def delCertificateImg(request):
-    id = request.GET['id']
+    id = str(request.GET['id']).replace('img', '')
+    currentUser = request.user
     try:
         img = CertificateImg.objects.get(pk=id)
-        img.certificate.attachmentNo = img.certificate.attachmentNo - 1
-        img.certificate.save()
-        img.delete()
-
-        return JsonResponse({"rst": True, "msg": "影像文件删除成功！"}, safe=False)
     except:
-        return JsonResponse({"rst": False, "msg": "影像文件删除失败！"}, safe=False)
+        return JsonResponse({"rst": False, "msg": "影像文件不存在！"}, safe=False)
+
+    if currentUser.role == 'user' and currentUser.org.id == img.certificate.org.id:
+        try:
+            img.certificate.attachmentNo = img.certificate.attachmentNo - 1
+            img.certificate.save()
+            img.delete()
+
+            return JsonResponse({"rst": True, "msg": "影像文件删除成功！"}, safe=False)
+        except:
+            return JsonResponse({"rst": False, "msg": "影像文件删除失败！"}, safe=False)
+    else:
+        return JsonResponse({"rst": False, "msg": "影像文件删除失败，无权限！"}, safe=False)
 
 
 @login_required
