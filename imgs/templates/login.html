@@ -5,7 +5,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <title>登录界面</title>
     <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
-    <link rel="stylesheet" href="https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
     <link href="{% static 'css/login_style.css' %}" type="text/css" rel="stylesheet">
     <script type="text/javascript" src="{% static 'jquery-1.12.4/jquery.min.js' %}"></script>
     <style>
@@ -104,7 +104,7 @@
 </script>
 
 <div class="container wrap1" style="height:450px;">
-    <h2 class="mg-b20 text-center">财务凭证电子化管理系统</h2>
+    <h2 class="mg-b20 text-center">财务预算电子化管理系统</h2>
     <div class="col-sm-8 col-md-5 center-auto pd-sm-50 pd-xs-20 main_content">
         <p class="text-center font16">用户登录</p>
         <form action="{% url 'imgs:login' %}" method="post" id="login-form">

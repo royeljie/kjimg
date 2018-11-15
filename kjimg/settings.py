@@ -24,7 +24,7 @@ SECRET_KEY = 'whj-agv-4fctm70ge@qclc-ff!km9xk7jn%=^zeb-)elnri=o5'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '11.32.81.36']
 
 # Application definition
 
@@ -132,3 +132,16 @@ AUTHENTICATION_BACKENDS = (
 )
 
 AUTH_USER_MODEL = 'imgs.UserProfile'
+
+# Add to your settings file
+CONTENT_TYPES = ['image']
+# 2.5MB - 2621440
+# 5MB - 5242880
+# 10MB - 10485760
+# 20MB - 20971520
+# 50MB - 5242880
+# 100MB 104857600
+# 250MB - 214958080
+# 500MB - 429916160
+MAX_UPLOAD_SIZE = "5242880"
+

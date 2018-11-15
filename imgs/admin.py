@@ -12,7 +12,7 @@ class MenuAdmin(admin.ModelAdmin):
 
 @admin.register(Org)
 class OrgAdmin(admin.ModelAdmin):
-    list_display = ('code', 'name', 'seq')
+    list_display = ('code', 'name')
 
 
 @admin.register(Certificate)

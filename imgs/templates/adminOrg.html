@@ -36,19 +36,12 @@
                     width: 100,
                     halign: 'center',
                     align: 'center',
-                }, {
-                    field: 'seq',
-                    title: '排序',
-                    width: 50,
-                    halign: 'center',
-                    align: 'right',
-                    fixed: true
                 }]]
             });
 
             $('#addBtn').linkbutton({
                 iconCls: 'building_add',
-                text: '录入',
+                text: '添加',
                 plain: true,
                 onClick: function () {
                     $('#fm').form('reset');
@@ -69,7 +62,7 @@
                         $('#dlg').dialog('open');
                         url = "{% url 'imgs:updateOrg' %}";
                     } else {
-                        $.messager.alert('操作结果', '请选择要修改的账务记录！', 'error');
+                        $.messager.alert('操作结果', '请选择要修改的机构！', 'error');
                     }
                 }
             });
@@ -96,7 +89,7 @@
                             }
                         });
                     } else {
-                        $.messager.alert('操作结果', '请选择要删除的账务记录！', 'error');
+                        $.messager.alert('操作结果', '请选择要删除的机构！', 'error');
                     }
                 }
             });
@@ -140,10 +133,8 @@
             </div>
             <div style="margin-bottom: 10px">
                 <input
-                        id="code" name="code" class="easyui-textbox"
+                        id="selfCode" name="selfCode" class="easyui-textbox"
                         data-options="required:true,label:'机构代码:{{ orgCode }}'" style="width: 49%">
-                <input id="seq" name="seq" class="easyui-numberbox"
-                       data-options="required:true,label:'顺&nbsp;&nbsp;&nbsp;序:',labelAlign:'right'" style="width: 49%">
             </div>
         </form>
     </div>

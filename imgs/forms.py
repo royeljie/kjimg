@@ -5,19 +5,19 @@ from imgs import models
 class CertificateForm(forms.ModelForm):
     class Meta:
         model = models.Certificate
-        fields = ['bookedDate', 'sn']
+        fields = ['sn']
 
 
 class OrgForm(forms.ModelForm):
     class Meta:
         model = models.Org
-        fields = ['id', 'code', 'name', 'seq']
+        fields = ['id', 'name']
 
 
 class UserForm(forms.ModelForm):
     class Meta:
         model = models.UserProfile
-        fields = ['org', 'fullname', 'username', 'is_active']
+        fields = ['org', 'fullname', 'username', 'is_active', 'role']
 
 
 # class AccountForm(forms.ModelForm):

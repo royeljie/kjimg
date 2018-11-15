@@ -27,7 +27,6 @@ class Menu(models.Model):
 class Org(models.Model):
     code = models.CharField('机构代码', max_length=10, null=False, blank=False, unique=True)
     name = models.CharField('机构名称', max_length=20, null=False, blank=False)
-    seq = models.PositiveSmallIntegerField('顺序')
 
     def __str__(self):
         return self.name
@@ -35,7 +34,7 @@ class Org(models.Model):
     class Meta:
         verbose_name = "机构"
         verbose_name_plural = verbose_name
-        ordering = ['seq']
+        ordering = ['code']
 
 
 class UserProfile(AbstractUser):
@@ -47,7 +46,7 @@ class UserProfile(AbstractUser):
     fullname = models.CharField(max_length=10, null=False, blank=False, verbose_name="姓名")
     org = models.ForeignKey('Org', on_delete=models.PROTECT, null=True, verbose_name="所属机构")
     date_disabled = models.DateTimeField(null=True, verbose_name="停用时间")
-    role = models.CharField(max_length=10, choices=ROLES, default='viewer', verbose_name="角色")
+    role = models.CharField(max_length=10, choices=ROLES, verbose_name="角色")
 
     class Meta:
         verbose_name = "用户"
@@ -73,8 +72,8 @@ class UserProfile(AbstractUser):
 
 class Certificate(models.Model):
     org = models.ForeignKey('Org', on_delete=models.PROTECT, null=False, default=1)
-    bookedDate = models.DateField('记账日期')
-    sn = models.CharField('流水号', max_length=15, null=False, blank=False)
+    bookedDate = models.DateField('记账日期', null=False)
+    sn = models.PositiveSmallIntegerField('流水号', null=False, blank=False)
     # amount = models.DecimalField('金额', max_digits=10, decimal_places=2)
     attachmentNo = models.PositiveSmallIntegerField('附件张数', null=False, blank=False)
     # account = models.ForeignKey('Account', on_delete=models.PROTECT, null=False)

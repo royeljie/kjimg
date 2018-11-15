@@ -8,7 +8,9 @@
         var imgId = null;
 
         $(document).ready(function () {
-            $('#lightgallery').lightGallery();
+            $('#lightgallery').lightGallery({
+                share:false
+            });
 
             {% if user.role == 'user' %}
                 $('img.img-responsive').bind('contextmenu', function (e) {
@@ -55,10 +57,10 @@
     <div id="div" class="demo-gallery" style="height: 150px;">
         <ul id="lightgallery" class="list-unstyled row">
             {% for img in imgs %}
-                <li id="li{{ img.id }}" data-src="{% url 'imgs:viewImg' %}?imgId={{ img.id }}"
+                <li data-src="{% url 'imgs:viewImg' %}?imgId={{ img.id }}"
                     data-sub-html="<h4>影像描述</h4><p>{{ img.description }}</p>">
-                    <a id="a{{ img.id }}" href="">
-                        <img id="img{{ img.id }}" class="img-responsive" title="{{ img.description }}"
+                    <a href="" title="{{ img.description }}" class="easyui-tooltip">
+                        <img id="img{{ img.id }}" class="img-responsive"
                              src="{% url 'imgs:viewThumb' %}?imgId={{ img.id }}">
                     </a>
                 </li>

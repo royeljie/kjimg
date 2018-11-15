@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import transaction
+from django.db import transaction, IntegrityError
 from django.http.response import JsonResponse, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.views.decorators.debug import sensitive_post_parameters
@@ -63,7 +63,12 @@ def formMenuTree(menu, request):
         jsonObj["state"] = "open"
         for subMenu in subMenus:
             if subMenu.roles.find(role) != -1:
-                children.append(formMenuTree(subMenu, request))
+                print(subMenu.text.find('下级'))
+                if subMenu.text.find('下级') != -1:
+                    if hasSubOrg(currentUser):
+                        children.append(formMenuTree(subMenu, request))
+                else:
+                    children.append(formMenuTree(subMenu, request))
         jsonObj["children"] = children
     return jsonObj
 
@@ -93,7 +98,7 @@ def pageUser(request):
         date_joined = user.date_joined.strftime('%Y-%m-%d %H:%I:%S')
         userObj = {"id": user.id, "username": user.username, "fullname": user.fullname,
                    "roleName": user.get_role_display(), "roleId": user.role, "is_active": user.is_active,
-                   "active": user.is_active and '有效' or '无效', "date_joined": date_joined, "orgId": user.org.id,
+                   "active": user.is_active and '启用' or '停用', "date_joined": date_joined, "orgId": user.org.id,
                    "orgName": user.org.name}
         userList.append(userObj)
     pageObj = {"total": len(users), "rows": userList}
@@ -104,7 +109,6 @@ def pageUser(request):
 @require_http_methods(["POST"])
 @transaction.atomic
 def saveUser(request):
-    # cert = User(org=currentUser.org, attachmentNo=0, uploaderName=currentUser.fullname)
     instance = UserProfile(is_staff=True, is_superuser=False)
     form = UserForm(request.POST, instance=instance)
     if form.is_valid():
@@ -272,12 +276,13 @@ def pageCertificate(request):
         for info in rejectInfoList:
             rejectMsg += '' + info.time.strftime("%Y-%m-%d %H:%I:%S") + '&nbsp;' + info.reason + '<br>'
         if len(rejectMsg) != 0:
-            certObj = {"id": cert.id, "orgName": cert.org.name, "bookedDate": cert.bookedDate,
-                       "sn": cert.sn, "attachmentNo": cert.attachmentNo, "rejectMsg": rejectMsg,
+            certObj = {"id": cert.id, "orgName": cert.org.name, "bookedYearMonth": cert.bookedDate.strftime("%Y-%m"),
+                       "bookedDate": cert.bookedDate, "sn": cert.sn, "attachmentNo": cert.attachmentNo,
+                       "rejectMsg": rejectMsg,
                        "uploaderName": cert.uploaderName, "submitted": cert.submitted, "rejected": cert.rejected}
         else:
-            certObj = {"id": cert.id, "orgName": cert.org.name, "bookedDate": cert.bookedDate,
-                       "sn": cert.sn, "attachmentNo": cert.attachmentNo,
+            certObj = {"id": cert.id, "orgName": cert.org.name, "bookedYearMonth": cert.bookedDate.strftime("%Y-%m"),
+                       "bookedDate": cert.bookedDate, "sn": cert.sn, "attachmentNo": cert.attachmentNo,
                        "uploaderName": cert.uploaderName, "submitted": cert.submitted, "rejected": cert.rejected}
         certList.append(certObj)
     pageObj = {"total": len(certs), "rows": certList}
@@ -299,12 +304,15 @@ def countRejectedCertificate(request):
 @require_http_methods(["POST"])
 def saveCertificate(request):
     currentUser = request.user
+    bookedDate = request.POST['bookedYearMonth'] + '-01'
 
-    cert = Certificate(org=currentUser.org, attachmentNo=0, uploaderName=currentUser.fullname)
+    cert = Certificate(org=currentUser.org, attachmentNo=0, uploaderName=currentUser.fullname, bookedDate=bookedDate)
     form = CertificateForm(request.POST, instance=cert)
     if form.is_valid():
         try:
             instance = form.save()
+        except IntegrityError as e:
+            return JsonResponse({"rst": False, "msg": "账务信息保存失败，一个月之内凭证号不能重复！"}, safe=False, content_type='text/html')
         except:
             return JsonResponse({"rst": False, "msg": "账务信息保存失败！"}, safe=False, content_type='text/html')
         return JsonResponse({"rst": True, "msg": "账务信息保存成功！", "certId": instance.id}, safe=False,
@@ -317,21 +325,26 @@ def saveCertificate(request):
 @require_http_methods(["POST"])
 def updateCertificate(request):
     form = CertificateForm(request.POST)
+    bookedDate = request.POST['bookedYearMonth'] + '-01'
+    print(bookedDate)
+
     try:
-        Certificate.objects.filter(id=form.data['id']).update(bookedDate=form.data['bookedDate'],
-                                                              sn=form.data['sn'])
+        Certificate.objects.filter(id=form.data['id']).update(bookedDate=bookedDate, sn=form.data['sn'])
         return JsonResponse({"rst": True, "msg": "账务信息更新成功！"}, safe=False, content_type='text/html')
-    except Exception as e:
-        raise e
+    except IntegrityError as e:
+        return JsonResponse({"rst": False, "msg": "账务信息更新失败，一个月之内凭证号不能重复！"}, safe=False, content_type='text/html')
+    except:
         return JsonResponse({"rst": False, "msg": "账务信息更新失败！"}, safe=False, content_type='text/html')
 
 
 @login_required
 @require_http_methods(["GET"])
+@transaction.atomic
 def delCertificate(request):
-    id = request.GET['id']
+    idList = request.GET.getlist('ids')
     try:
-        Certificate.objects.get(pk=id).delete()
+        for id in idList:
+            Certificate.objects.filter(pk=id).delete()
         return JsonResponse({"rst": True, "msg": "账务信息删除成功！"}, safe=False)
     except:
         return JsonResponse({"rst": False, "msg": "账务信息删除失败！"}, safe=False)
@@ -361,13 +374,14 @@ def delCertificate(request):
 @require_http_methods(["GET"])
 @transaction.atomic
 def submitCertificate(request):
-    id = request.GET['id']
+    idList = request.GET.getlist('ids')
     try:
-        cert = Certificate.objects.get(pk=id)
-        cert.submitted = True
-        cert.rejected = False
-        cert.save()
-        RejectInfo.objects.filter(certificate_id=id).filter(handled=False).update(handled=True)
+        for id in idList:
+            cert = Certificate.objects.get(pk=id)
+            cert.submitted = True
+            cert.rejected = False
+            cert.save()
+            RejectInfo.objects.filter(certificate_id=id).filter(handled=False).update(handled=True)
         return JsonResponse({"rst": True, "msg": "账务信息提交成功！"}, safe=False)
     except:
         return JsonResponse({"rst": False, "msg": "账务信息提交失败！"}, safe=False)
@@ -459,7 +473,7 @@ def delCertificateImg(request):
     except:
         return JsonResponse({"rst": False, "msg": "影像文件不存在！"}, safe=False)
 
-    if currentUser.role == 'user' and currentUser.org.id == img.certificate.org.id:
+    if currentUser.role == 'user' and currentUser.org.id == img.certificate.org.id and img.certificate.submitted is False:
         try:
             img.certificate.attachmentNo = img.certificate.attachmentNo - 1
             img.certificate.save()
@@ -480,6 +494,7 @@ def uploadImg(request):
     try:
         cert = Certificate.objects.get(id=certId)
         fileObj = request.FILES.get("img")
+        description = request.POST['description']
 
         # 产生缩略图
         thumb = Image.open(fileObj)
@@ -493,7 +508,8 @@ def uploadImg(request):
         output2 = io.BytesIO()
         thumb.save(output2, format='JPEG')
 
-        img = CertificateImg(img=output1.getvalue(), thumb=output2.getvalue(), certificate_id=certId)
+        img = CertificateImg(img=output1.getvalue(), thumb=output2.getvalue(), certificate_id=certId,
+                             description=description)
         img.save()
         attachmentNo = cert.attachmentNo + 1
         Certificate.objects.filter(id=cert.id).update(attachmentNo=attachmentNo)
@@ -539,7 +555,7 @@ def listSubOrg(request):
     orgList = []
     orgs = Org.objects.filter(code__startswith=currentUser.org.code).exclude(code=currentUser.org.code)
     for org in orgs:
-        orgList.append({"id": org.id, "code": org.code, "name": org.name, "seq": org.seq})
+        orgList.append({"id": org.id, "code": org.code, "name": org.name})
     return JsonResponse(orgList, safe=False)
 
 
@@ -551,7 +567,7 @@ def listSubAndSelfOrg(request):
     orgList = []
     orgs = Org.objects.filter(code__startswith=currentUser.org.code)
     for org in orgs:
-        orgList.append({"id": org.id, "code": org.code, "name": org.name, "seq": org.seq})
+        orgList.append({"id": org.id, "code": org.code, "name": org.name})
     return JsonResponse(orgList, safe=False)
 
 
@@ -580,7 +596,8 @@ def pageOrg(request):
     except EmptyPage:
         showOrgs = paginator.page(paginator.num_pages)
     for org in showOrgs:
-        orgObj = {"id": org.id, "code": org.code, "name": org.name, "seq": org.seq}
+        selfCode = org.code.replace(currentUser.org.code, '')
+        orgObj = {"id": org.id, "code": org.code, "selfCode": selfCode, "name": org.name}
         orgList.append(orgObj)
     pageObj = {"total": len(orgs), "rows": orgList}
     return JsonResponse(pageObj, safe=False)
@@ -589,12 +606,17 @@ def pageOrg(request):
 @staff_member_required
 @require_http_methods(["POST"])
 def saveOrg(request):
-    form = OrgForm(request.POST)
+    currentUser = request.user
+
+    code = currentUser.org.code + request.POST['selfCode']
+    org = Org(code=code)
+    form = OrgForm(request.POST, instance=org)
     if form.is_valid():
         try:
             form.save()
-        except Exception as e:
-            print(e.__traceback__)
+        except IntegrityError:
+            return JsonResponse({"rst": False, "msg": "机构信息保存失败，机构代码不能重复！"}, safe=False, content_type='text/html')
+        except Exception:
             return JsonResponse({"rst": False, "msg": "机构信息保存失败！"}, safe=False, content_type='text/html')
         return JsonResponse({"rst": True, "msg": "机构信息保存成功！"}, safe=False, content_type='text/html')
     else:
@@ -604,15 +626,21 @@ def saveOrg(request):
 @staff_member_required
 @require_http_methods(["POST"])
 def updateOrg(request):
+    currentUser = request.user
+
     form = OrgForm(request.POST)
     orgId = form.data['id']
     orgName = form.data['name']
-    orgSeq = form.data['seq']
+    orgCode = currentUser.org.code + form.data['selfCode']
     try:
-        Org.objects.filter(id=orgId).update(name=orgName, seq=orgSeq)
+        org = Org.objects.get(pk=orgId)
+        org.name = orgName
+        org.code = orgCode
+        org.save()
         return JsonResponse({"rst": True, "msg": "机构信息更新成功！"}, safe=False, content_type='text/html')
+    except IntegrityError:
+        return JsonResponse({"rst": False, "msg": "机构信息更新失败，机构代码不能重复！"}, safe=False, content_type='text/html')
     except Exception as e:
-        raise e
         return JsonResponse({"rst": False, "msg": "机构信息更新失败！"}, safe=False, content_type='text/html')
 
 
@@ -631,6 +659,20 @@ def delOrg(request):
             return JsonResponse({"rst": False, "msg": "机构信息删除失败！"}, safe=False)
     else:
         return JsonResponse({"rst": False, "msg": "机构信息删除失败，无权限！"}, safe=False)
+
+
+def hasSubOrg(currentUser):
+    org = currentUser.org
+    subOrgs = Org.objects.filter(code__startswith=org.code).exclude(code=org.code)
+    if len(subOrgs) > 0:
+        return True
+    else:
+        return False
+
+
+def hasParentOrg(currentUser):
+    org = currentUser.org
+    parentOrg = Org.objects.filter(code__search='')
 
 
 # @staff_member_required
