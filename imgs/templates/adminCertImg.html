@@ -9,7 +9,7 @@
 
         $(document).ready(function () {
             $('#lightgallery').lightGallery({
-                share:false
+                share: false
             });
 
             {% if user.role == 'user' %}
@@ -49,6 +49,48 @@
                     }
                 )
                 ;
+            } else if (item.name == 'moveToFirst' && imgId != null) {
+                $.ajax({
+                    url: "{% url 'imgs:changeCertificateImgOrder' %}",
+                    data: {
+                        id: imgId,
+                        action: 'toFirst'
+                    },
+                    success: function (rst) {
+                        $.messager.alert({
+                            title: '操作结果',
+                            msg: rst.msg,
+                            icon: 'info',
+                            fn: function () {
+                                if (rst.rst) {
+                                    parent.reloadDg();
+                                    window.location.reload();
+                                }
+                            }
+                        });
+                    }
+                });
+            } else if (item.name == 'moveToLast' && imgId != null) {
+                $.ajax({
+                    url: "{% url 'imgs:changeCertificateImgOrder' %}",
+                    data: {
+                        id: imgId,
+                        action: 'toLast'
+                    },
+                    success: function (rst) {
+                        $.messager.alert({
+                            title: '操作结果',
+                            msg: rst.msg,
+                            icon: 'info',
+                            fn: function () {
+                                if (rst.rst) {
+                                    parent.reloadDg();
+                                    window.location.reload();
+                                }
+                            }
+                        });
+                    }
+                });
             } else {
                 $.messager.alert('操作结果', '请选择要删除的影像图片！', 'error');
             }
@@ -60,7 +102,7 @@
                 <li data-src="{% url 'imgs:viewImg' %}?imgId={{ img.id }}"
                     data-sub-html="<h4>影像描述</h4><p>{{ img.description }}</p>">
                     <a href="" title="{{ img.description }}" class="easyui-tooltip">
-                        <img id="img{{ img.id }}" class="img-responsive"
+                        <img id="img_{{ img.id }}" class="img-responsive"
                              src="{% url 'imgs:viewThumb' %}?imgId={{ img.id }}">
                     </a>
                 </li>
@@ -71,6 +113,8 @@
     {% if user.role == 'user' %}
         <div id="context-menu" class="easyui-menu" data-options="onClick:menuHandler" style="width:120px;">
             <div data-options="name:'delete',iconCls:'picture_delete'">删除</div>
+            <div data-options="name:'moveToFirst',iconCls:'control_start_blue'">移到最前</div>
+            <div data-options="name:'moveToLast',iconCls:'control_end_blue'">移到最后</div>
         </div>
     {% endif %}
 {% endblock %}

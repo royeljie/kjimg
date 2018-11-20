@@ -1,3 +1,5 @@
+import datetime
+
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth import logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
@@ -244,6 +246,9 @@ def pageCertificate(request):
     orgId = request.POST.get('orgId', None)
     # accountCode = request.POST.get('accountCode', None)
     # detail = request.POST.get('detail', None)
+    now_time = datetime.datetime.now()
+    first_day = datetime.datetime(now_time.year, now_time.month, 1, 0, 0, 0)
+    last_day = datetime.datetime(now_time.year, now_time.month + 1, 1, 0, 0, 0)
     beginDate = request.POST.get('beginDate', None)
     endDate = request.POST.get('endDate', None)
     beginAmount = request.POST.get('beginAmount', None)
@@ -391,8 +396,6 @@ def submitCertificate(request):
 @require_http_methods(["POST"])
 @transaction.atomic
 def rejectCertificate(request):
-    print(request.POST.get('reason'))
-    print(request.POST.get('certificate'))
     form = RejectInfoForm(request.POST)
     if form.is_valid():
         try:
@@ -466,7 +469,7 @@ def listCertificateImg(request):
 @require_http_methods(["GET"])
 @transaction.atomic
 def delCertificateImg(request):
-    id = str(request.GET['id']).replace('img', '')
+    id = str(request.GET.get('id')).replace('img_', '')
     currentUser = request.user
     try:
         img = CertificateImg.objects.get(pk=id)
@@ -484,6 +487,43 @@ def delCertificateImg(request):
             return JsonResponse({"rst": False, "msg": "影像文件删除失败！"}, safe=False)
     else:
         return JsonResponse({"rst": False, "msg": "影像文件删除失败，无权限！"}, safe=False)
+
+
+@login_required
+@require_http_methods(["GET"])
+@transaction.atomic
+def changeCertificateImgOrder(request):
+    action = request.GET.get('action')
+    currentUser = request.user
+    try:
+        id = str(request.GET.get('id')).replace('img_', '')
+        img = CertificateImg.objects.get(pk=id)
+        if currentUser.role == 'user' and currentUser.org.id == img.certificate.org.id and img.certificate.submitted is False:
+            if action == 'toFirst':
+                firstImg = CertificateImg.objects.filter(certificate_id=img.certificate.id).order_by(
+                    'uploadTime').first()
+                if img.id == firstImg.id:
+                    return JsonResponse({"rst": False, "msg": "该影像已经在第一位了！"}, safe=False)
+                else:
+                    newUploadTime = firstImg.uploadTime - datetime.timedelta(minutes=1)
+                    CertificateImg.objects.filter(id=id).update(uploadTime=newUploadTime)
+                    return JsonResponse({"rst": True, "msg": "该影像排序成功！"}, safe=False)
+            elif action == 'toLast':
+                lastImg = CertificateImg.objects.filter(certificate_id=img.certificate.id).order_by(
+                    '-uploadTime').first()
+                if img.id == lastImg.id:
+                    return JsonResponse({"rst": False, "msg": "该影像已经在最后一位了！"}, safe=False)
+                else:
+                    newUploadTime = lastImg.uploadTime + datetime.timedelta(minutes=1)
+                    CertificateImg.objects.filter(id=id).update(uploadTime=newUploadTime)
+                    return JsonResponse({"rst": True, "msg": "该影像排序成功！"}, safe=False)
+            else:
+                return JsonResponse({"rst": False, "msg": "未指定排序方法！"}, safe=False)
+        else:
+            return JsonResponse({"rst": False, "msg": "影像文件排序失败，无权限！"}, safe=False)
+    except Exception as e:
+        raise e
+        return JsonResponse({"rst": False, "msg": "影像文件不存在！"}, safe=False)
 
 
 @login_required
@@ -513,6 +553,8 @@ def uploadImg(request):
         img.save()
         attachmentNo = cert.attachmentNo + 1
         Certificate.objects.filter(id=cert.id).update(attachmentNo=attachmentNo)
+    except OSError:
+        return JsonResponse({"rst": False, "msg": "图片格式不正确，请上传JPG格式文件！"}, safe=False, content_type='text/html')
     except Exception as e:
         return JsonResponse({"rst": False, "msg": "凭证影像保存失败！"}, safe=False, content_type='text/html')
     return JsonResponse({"rst": True, "msg": "凭证影像保存成功！", "certId": certId}, safe=False, content_type='text/html')

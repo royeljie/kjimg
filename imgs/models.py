@@ -90,7 +90,7 @@ class Certificate(models.Model):
     class Meta:
         verbose_name = "会计凭证"
         verbose_name_plural = verbose_name
-        ordering = ['-bookedDate', '-sn']
+        ordering = ['org', '-bookedDate', '-sn']
         unique_together = ('org', 'bookedDate', 'sn')
 
 

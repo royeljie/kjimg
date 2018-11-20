@@ -232,7 +232,7 @@
                 });
             {% endif %}
 
-            {% if scope == 'belonged' %}
+            {% if scope == 'belonged' or user.role == 'admin' %}
                 $('#rejectBtn').linkbutton({
                     iconCls: 'page_cancel',
                     text: '退回修改',
@@ -337,9 +337,12 @@
                                     month = parseInt($(this).attr('abbr'), 10);
 
                                 //隐藏日期对象
-                                $('#bookedYearMonth').datebox('hidePanel')
-                                //设置日期的值
-                                    .datebox('setValue', year + '-' + month);
+                                var selectedDate = new Date(year, month - 1, 1);
+                                if (selectedDate <= new Date()) {
+                                    $('#bookedYearMonth').datebox('hidePanel')
+                                    //设置日期的值
+                                        .datebox('setValue', year + '-' + month);
+                                }
                             });
                         }, 0);
                 },
@@ -491,7 +494,7 @@
             <a id="addBtn" href="#"></a>
             <a id="editBtn" href="#"></a>
             <a id="delBtn" href="#"></a>
-            {#            <a id="importBtn" href="#"></a>#}
+            {#<a id="importBtn" href="#"></a>#}
             <a id="uploadBtn" href="#"></a>
             <a id="submitBtn" href="#"></a>
         {% endif %}
@@ -542,7 +545,7 @@
             </div>
             <div style="margin-bottom: 10px;">
                 <input id="description" name="description" class="easyui-textbox"
-                       data-options="required:true,label:'影像说明:',labelAlign:'left'" style="width:99%">
+                       data-options="required:false,label:'影像说明:',labelAlign:'left'" style="width:99%">
             </div>
         </form>
     </div>

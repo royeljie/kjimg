@@ -22,6 +22,7 @@ app_name = 'imgs'
 
 urlpatterns = [
     # url('account/list', imgs_views.listAccount, name='listAccount'),
+    url('cert-img/changeOrder', imgs_views.changeCertificateImgOrder, name='changeCertificateImgOrder'),
     url('cert-img/thumb', imgs_views.viewThumb, name='viewThumb'),
     url('cert-img/view', imgs_views.viewImg, name='viewImg'),
     url('cert-img/upload', imgs_views.uploadImg, name='uploadImg'),
