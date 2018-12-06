@@ -47,7 +47,7 @@
                     align: 'center'
                 }, {
                     field: 'active',
-                    title: '是否启用',
+                    title: '用户状态',
                     width: 100,
                     halign: 'center',
                     align: 'center',
@@ -69,6 +69,7 @@
                 onClick: function () {
                     $('#fm').form('reset');
                     $('#dlg').dialog('open');
+                    $('#username').textbox('enable');
                     url = "{% url 'imgs:saveUser' %}";
                 }
             });
@@ -89,6 +90,7 @@
                         $('#is_active').combobox('setValue', is_active);
                         $('#org').combobox('setValue', row.orgId);
                         $('#role').combobox('setValue', row.roleId);
+                        $('#username').textbox('disable');
                         $('#dlg').dialog('open');
                         url = "{% url 'imgs:updateUser' %}";
                     } else {
@@ -208,7 +210,7 @@
                 <input id="is_active"
                        name="is_active" class="easyui-combobox" style="width: 49%"
                        data-options="
-				       label:'是否有效:',
+				       label:'用户状态:',
 				       labelAlign:'right',
 				       editable:false,
 				       required:true,

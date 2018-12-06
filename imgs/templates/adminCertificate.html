@@ -61,7 +61,7 @@
                     formatter: showRejectFormat
                 }, {
                     field: 'attachmentNo',
-                    title: '附件张数',
+                    title: '凭证张数',
                     width: 100,
                     halign: 'center',
                     align: 'center',
@@ -202,7 +202,7 @@
                                     $.messager.alert('操作结果', '已提交的记录不能删除！', 'error');
                                     return false;
                                 } else if (rows[i].attachmentNo == 0) {
-                                    $.messager.alert('操作结果', '不能提交尚未上传影像附件的账务信息！', 'error');
+                                    $.messager.alert('操作结果', '不能提交尚未上传凭证影像的账务信息！', 'error');
                                     return false;
                                 } else {
                                     idList.push(rows[i].id);

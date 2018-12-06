@@ -118,9 +118,11 @@ def saveUser(request):
             user = form.save()
             user.set_password(DEFAULT_PASSWORD)
             user.save()
-        except:
+        except Exception:
             return JsonResponse({"rst": False, "msg": "用户信息保存失败！"}, safe=False, content_type='text/html')
         return JsonResponse({"rst": True, "msg": "用户信息保存成功！"}, safe=False, content_type='text/html')
+    else:
+        return JsonResponse({"rst": False, "msg": "用户信息保存失败，用户名已存在！"}, safe=False, content_type='text/html')
 
 
 @staff_member_required
@@ -129,7 +131,6 @@ def updateUser(request):
     form = UserForm(request.POST)
     id = form.data['id']
     user = UserProfile.objects.get(pk=id)
-    # user.username = form.data['username']
     user.fullname = form.data['fullname']
     user.is_active = form.data['is_active']
     user.org = Org.objects.get(id=form.data['org'])
@@ -138,7 +139,6 @@ def updateUser(request):
         user.save()
         return JsonResponse({"rst": True, "msg": "用户信息更新成功！"}, safe=False, content_type='text/html')
     except Exception as e:
-        raise e
         return JsonResponse({"rst": False, "msg": "用户信息更新失败！"}, safe=False, content_type='text/html')
 
 
@@ -247,8 +247,8 @@ def pageCertificate(request):
     # accountCode = request.POST.get('accountCode', None)
     # detail = request.POST.get('detail', None)
     now_time = datetime.datetime.now()
-    first_day = datetime.datetime(now_time.year, now_time.month, 1, 0, 0, 0)
-    last_day = datetime.datetime(now_time.year, now_time.month + 1, 1, 0, 0, 0)
+    # first_day = datetime.datetime(now_time.year, now_time.month, 1, 0, 0, 0)
+    # last_day = datetime.datetime(now_time.year, now_time.month + 1, 1, 0, 0, 0)
     beginDate = request.POST.get('beginDate', None)
     endDate = request.POST.get('endDate', None)
     beginAmount = request.POST.get('beginAmount', None)
@@ -524,6 +524,20 @@ def changeCertificateImgOrder(request):
     except Exception as e:
         raise e
         return JsonResponse({"rst": False, "msg": "影像文件不存在！"}, safe=False)
+
+
+@login_required
+@require_http_methods(["POST"])
+@transaction.atomic
+def updateCertificateImgDescription(request):
+    id = str(request.POST.get('id')).replace('img_', '')
+    description = request.POST.get('description', '')
+    print(description)
+    try:
+        CertificateImg.objects.filter(id=id).update(description=description)
+    except Exception:
+        return JsonResponse({"rst": False, "msg": "修改影像描述失败！"}, safe=False)
+    return JsonResponse({"rst": True, "msg": "修改影像描述成功！"}, safe=False)
 
 
 @login_required

@@ -1,11 +1,13 @@
 {% extends "base.html" %}
 {% load static %}
-{% block title %}影像预览{% endblock %} {% block content %}
+{% block title %}影像预览{% endblock %}
+{% block content %}
     <link href="{% static 'lightgallery/css/lightgallery.css' %}" rel="stylesheet">
     <link href="{% static 'lightgallery/css/htmleaf-demo.css' %}" rel="stylesheet">
     <script src="{% static 'lightgallery/js/lightgallery-all.min.js' %}"></script>
     <script type="text/javascript">
         var imgId = null;
+        var imgDescription = '';
 
         $(document).ready(function () {
             $('#lightgallery').lightGallery({
@@ -16,6 +18,7 @@
                 $('img.img-responsive').bind('contextmenu', function (e) {
                     e.preventDefault();
                     imgId = e.currentTarget.id;
+                    imgDescription = $('#' + imgId).attr('desc');
                     $('#context-menu').menu('show', {
                         left: e.pageX,
                         top: e.pageY
@@ -91,9 +94,35 @@
                         });
                     }
                 });
+            } else if (item.name == 'editDescription' && imgId != null) {
+                $('#description').textbox('setValue', imgDescription);
+                $('#editDescriptionDlg').dialog('open');
             } else {
                 $.messager.alert('操作结果', '请选择要删除的影像图片！', 'error');
             }
+        }
+
+        function updateDescription() {
+            $.ajax({
+                url: "{% url 'imgs:updateImgDescription' %}",
+                data: {
+                    id: imgId,
+                    description: $('#description').textbox('getValue')
+                },
+                method: 'POST',
+                success: function (rst) {
+                    $.messager.alert({
+                        title: '操作结果',
+                        msg: rst.msg,
+                        icon: 'info',
+                        fn: function () {
+                            if (rst.rst) {
+                                window.location.reload();
+                            }
+                        }
+                    });
+                }
+            });
         }
     </script>
     <div id="div" class="demo-gallery" style="height: 150px;">
@@ -102,7 +131,7 @@
                 <li data-src="{% url 'imgs:viewImg' %}?imgId={{ img.id }}"
                     data-sub-html="<h4>影像描述</h4><p>{{ img.description }}</p>">
                     <a href="" title="{{ img.description }}" class="easyui-tooltip">
-                        <img id="img_{{ img.id }}" class="img-responsive"
+                        <img id="img_{{ img.id }}" class="img-responsive" desc="{{ img.description }}"
                              src="{% url 'imgs:viewThumb' %}?imgId={{ img.id }}">
                     </a>
                 </li>
@@ -112,9 +141,24 @@
 
     {% if user.role == 'user' %}
         <div id="context-menu" class="easyui-menu" data-options="onClick:menuHandler" style="width:120px;">
-            <div data-options="name:'delete',iconCls:'picture_delete'">删除</div>
+            <div data-options="name:'delete',iconCls:'picture_delete'">删除影像</div>
             <div data-options="name:'moveToFirst',iconCls:'control_start_blue'">移到最前</div>
             <div data-options="name:'moveToLast',iconCls:'control_end_blue'">移到最后</div>
+            <div data-options="name:'editDescription',iconCls:'comment_edit'">修改描述</div>
+        </div>
+
+        <div id="editDescriptionDlg" class="easyui-dialog" style="width: 400px" title="修改影像描述" closed="true"
+             modal="true" buttons="#editDescriptionDlg-buttons">
+            <div style="margin-bottom: 10px; margin-left: 20px; margin-top: 10px;">
+                <input id="description" name="description" class="easyui-textbox"
+                       data-options="required:false,label:'影像说明:',labelAlign:'left'" style="width:80%">
+            </div>
+        </div>
+        <div id="editDescriptionDlg-buttons">
+            <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="disk" onclick="updateDescription()"
+               style="width: 90px">保存</a> <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="cancel"
+                                             onclick="javascript:$('#editDescriptionDlg').dialog('close')"
+                                             style="width: 90px">取消</a>
         </div>
     {% endif %}
 {% endblock %}
